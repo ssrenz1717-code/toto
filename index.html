@@ -475,28 +475,37 @@ function deleteUser(userId){
 function setUsersTab(tab){S.usersTab=tab;renderUsers();}
 
 // ─── ADD ITEM ─────────────────────────────────────────────────
-function onModelSelect(sel){
+function selectPrinterChip(model,mk){
+  document.querySelectorAll('.ai-printer-chip').forEach(function(c){
+    c.style.background='#f8fafc';c.style.borderColor='#e2e8f0';c.style.color='#475569';c.style.fontWeight='500';
+  });
+  const chip=document.querySelector('.ai-printer-chip[data-model="'+model+'"]');
+  if(chip){chip.style.background='#ede9fe';chip.style.borderColor='#4f46e5';chip.style.color='#4f46e5';chip.style.fontWeight='700';}
   const wrap=document.getElementById('ai-custom-wrap');
   const mkInput=document.getElementById('ai-mk');
-  const isNew=sel.value==='__new__';
-  if(wrap)wrap.style.display=isNew?'flex':'none';
-  if(!isNew&&mkInput){
-    const opt=sel.options[sel.selectedIndex];
-    mkInput.value=opt.getAttribute('data-mk')||'';
-    mkInput.readOnly=true;mkInput.style.opacity='.6';
+  const hidden=document.getElementById('ai-model-val');
+  if(model==='__new__'){
+    if(wrap)wrap.style.display='flex';
+    if(mkInput){mkInput.value='';mkInput.readOnly=false;mkInput.style.opacity='1';}
+    if(hidden)hidden.value='__new__';
+  } else {
+    if(wrap)wrap.style.display='none';
+    if(mkInput){mkInput.value=mk||'';mkInput.readOnly=true;mkInput.style.opacity='.6';}
+    if(hidden)hidden.value=model;
   }
-  if(isNew&&mkInput){mkInput.value='';mkInput.readOnly=false;mkInput.style.opacity='1';}
 }
 function openAddItem(){
   if(!isAdmin())return;
   const uniqueModels=[];const seen=new Set();
   S.inventory.forEach(function(i){if(!seen.has(i.model)){seen.add(i.model);uniqueModels.push({model:i.model,mk:i.mk});}});
-  let modelOpts='<option value="">— เลือกเครื่องพิมพ์ —</option>';
-  uniqueModels.forEach(function(m){modelOpts+='<option value="'+esc(m.model)+'" data-mk="'+esc(m.mk)+'">'+esc(m.model)+'</option>';});
-  modelOpts+='<option value="__new__">+ เพิ่มรุ่นใหม่…</option>';
+  let chips='';
+  uniqueModels.forEach(function(m){
+    chips+='<button type="button" class="ai-printer-chip" data-model="'+esc(m.model)+'" data-mk="'+esc(m.mk)+'" onclick="selectPrinterChip(this.dataset.model,this.dataset.mk)" style="padding:8px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:13px;font-weight:500;cursor:pointer;font-family:\'Sarabun\',sans-serif;white-space:nowrap;transition:all .15s">'+esc(m.model)+'</button>';
+  });
+  chips+='<button type="button" class="ai-printer-chip" data-model="__new__" data-mk="" onclick="selectPrinterChip(\'__new__\',\'\')" style="padding:8px 14px;border-radius:20px;border:1.5px dashed #cbd5e1;background:#fff;color:#94a3b8;font-size:13px;font-weight:500;cursor:pointer;font-family:\'Sarabun\',sans-serif;white-space:nowrap">+ เพิ่มรุ่นใหม่…</button>';
   document.getElementById('modal-root').innerHTML=`
   <div class="modal-bg" onclick="if(event.target===this)closeModal()">
-    <div class="card fade-up" style="width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden;max-height:92vh;display:flex;flex-direction:column">
+    <div class="card fade-up" style="width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden;max-height:92vh;display:flex;flex-direction:column">
       <div style="height:4px;background:linear-gradient(90deg,#4f46e5,#7c3aed)"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f1f5f9;flex-shrink:0">
         <div><div style="font-size:15px;font-weight:700;color:#1e293b">เพิ่มรายการหมึกใหม่</div><div style="font-size:11px;color:#94a3b8;margin-top:2px">กรอกข้อมูลหมึกที่ต้องการเพิ่มในระบบ</div></div>
@@ -507,9 +516,10 @@ function openAddItem(){
           <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">ชื่อหมึก <span style="color:#ef4444">*</span></label>
           <input id="ai-name" type="text" placeholder="เช่น หมึกดำ, หมึกฟ้า, ถังหมึกเสีย"/>
         </div>
+        <input type="hidden" id="ai-model-val" value=""/>
         <div style="grid-column:1/-1">
-          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">เครื่องพิมพ์ <span style="color:#ef4444">*</span></label>
-          <select id="ai-model" onchange="onModelSelect(this)">${modelOpts}</select>
+          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:8px">เครื่องพิมพ์ <span style="color:#ef4444">*</span></label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">`+chips+`</div>
         </div>
         <div id="ai-custom-wrap" style="grid-column:1/-1;display:none;flex-direction:column;gap:10px;padding:12px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">
           <div>
@@ -580,9 +590,9 @@ function confirmAddItem(){
   if(!isAdmin())return;
   const g=function(id){return document.getElementById(id)?.value?.trim()||'';};
   const name=g('ai-name');
-  const modelSel=document.getElementById('ai-model');
-  const isNew=modelSel?.value==='__new__';
-  const model=isNew?g('ai-model-custom'):modelSel?.value||'';
+  const modelVal=g('ai-model-val');
+  const isNew=modelVal==='__new__';
+  const model=isNew?g('ai-model-custom'):modelVal;
   const mk=g('ai-mk');
   const showErr=function(msg){const el=document.getElementById('ai-err');if(el){el.textContent=msg;el.style.display='block';}};
   if(!name){showErr('กรุณาระบุชื่อหมึก');return;}
