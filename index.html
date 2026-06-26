@@ -11,42 +11,42 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 *::-webkit-scrollbar{width:5px;height:5px}
-*::-webkit-scrollbar-track{background:#f1f5f9}
-*::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
-body{font-family:'Sarabun',sans-serif;background:#f0f4f8;color:#1e293b;-webkit-font-smoothing:antialiased}
-.card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;transition:box-shadow .2s,transform .2s}
+*::-webkit-scrollbar-track{background:var(--surface3)}
+*::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+body{font-family:'Sarabun',sans-serif;background:var(--bg-main);color:var(--text-primary);-webkit-font-smoothing:antialiased}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;transition:box-shadow .2s,transform .2s}
 .card-hover:hover{box-shadow:0 8px 30px rgba(0,0,0,.1);transform:translateY(-2px)}
-.card-sm{background:#fff;border:1px solid #e2e8f0;border-radius:12px}
+.card-sm{background:var(--surface);border:1px solid var(--border);border-radius:12px}
 .mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
-.sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;color:#64748b;border:1px solid transparent}
-.sidebar-item:hover{background:#f1f5f9;color:#1e293b}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;color:var(--text-muted);border:1px solid transparent}
+.sidebar-item:hover{background:var(--surface3);color:var(--text-primary)}
 .sidebar-item.active{background:#ede9fe;color:#4f46e5;border-color:#c4b5fd}
-.tab{padding:6px 12px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid #e2e8f0;transition:all .15s;color:#64748b;background:#fff}
-.tab:hover{background:#f8fafc;border-color:#cbd5e1;color:#1e293b}
+.tab{padding:6px 12px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);transition:all .15s;color:var(--text-muted);background:var(--surface)}
+.tab:hover{background:var(--surface2);border-color:var(--text-placeholder);color:var(--text-primary)}
 .tab.t-all{background:#4f46e5;color:#fff;border-color:#4f46e5}
 .tab.t-normal{background:#dcfce7;color:#16a34a;border-color:#86efac}
 .tab.t-low{background:#fef3c7;color:#d97706;border-color:#fcd34d}
 .tab.t-critical{background:#fee2e2;color:#dc2626;border-color:#fca5a5}
-.tab.t-empty{background:#f1f5f9;color:#64748b;border-color:#cbd5e1}
+.tab.t-empty{background:var(--surface3);color:var(--text-muted);border-color:var(--text-placeholder)}
 .btn-add{display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:10px;background:#dcfce7;border:1px solid #86efac;color:#16a34a;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;font-family:'Sarabun',sans-serif}
 .btn-add:hover{background:#bbf7d0;transform:scale(1.03)}
 .btn-add:active{transform:scale(.97)}
 .btn-add:disabled{opacity:.3;cursor:not-allowed;transform:none}
-.btn-use{display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:10px;background:#fff;border:1px solid #e2e8f0;color:#64748b;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;font-family:'Sarabun',sans-serif}
+.btn-use{display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-muted);font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;font-family:'Sarabun',sans-serif}
 .btn-use:hover{background:#fee2e2;border-color:#fca5a5;color:#dc2626}
 .btn-use:active{transform:scale(.97)}
 .btn-use:disabled{opacity:.3;cursor:not-allowed;transform:none}
-.progress-track{width:100%;height:8px;background:#f1f5f9;border-radius:99px;overflow:hidden}
+.progress-track{width:100%;height:8px;background:var(--border2);border-radius:99px;overflow:hidden}
 .progress-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1)}
-input,textarea,select{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;color:#1e293b;padding:9px 12px;font-size:14px;outline:none;width:100%;box-sizing:border-box;font-family:'Sarabun',sans-serif;transition:border .15s,background .15s}
-input::placeholder,textarea::placeholder{color:#cbd5e1}
-input:focus,textarea:focus,select:focus{border-color:#6366f1;background:#fff;box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+input,textarea,select{background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text-primary);padding:9px 12px;font-size:14px;outline:none;width:100%;box-sizing:border-box;font-family:'Sarabun',sans-serif;transition:border .15s,background .15s}
+input::placeholder,textarea::placeholder{color:var(--text-placeholder)}
+input:focus,textarea:focus,select:focus{border-color:#6366f1;background:var(--surface);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
 input[type=number]{font-family:'JetBrains Mono',monospace}
-select option{background:#fff;color:#1e293b}
+select option{background:var(--surface);color:var(--text-primary)}
 table{width:100%;border-collapse:collapse}
-th{padding:11px 16px;text-align:left;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid #f1f5f9;white-space:nowrap}
-td{padding:12px 16px;font-size:13px;color:#475569;border-bottom:1px solid #f8fafc}
-tr:hover td{background:#f8fafc}
+th{padding:11px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border2);white-space:nowrap}
+td{padding:12px 16px;font-size:13px;color:var(--text-secondary);border-bottom:1px solid var(--border2)}
+tr:hover td{background:var(--surface2)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
 @keyframes pulse-r{0%,100%{opacity:.5}50%{opacity:1}}
@@ -55,39 +55,51 @@ tr:hover td{background:#f8fafc}
 .pulse-r{animation:pulse-r 1.8s ease-in-out infinite}
 .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.35);backdrop-filter:blur(4px);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
 .notif-overlay{position:fixed;inset:0;z-index:40}
-.notif-panel{position:fixed;right:0;top:0;bottom:0;width:340px;z-index:41;animation:slideIn .2s ease-out;background:#fff;border-left:1px solid #e2e8f0;box-shadow:-8px 0 40px rgba(0,0,0,.08);display:flex;flex-direction:column}
-.icon-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;background:none;border:none;cursor:pointer;color:#94a3b8;transition:all .15s}
-.icon-btn:hover{background:#f1f5f9;color:#4f46e5}
-:root{--bg:#f0f4f8;--surface:#fff;--surface2:#f8fafc;--border:#e2e8f0;--border2:#cbd5e1;--text:#1e293b;--text2:#475569;--text3:#94a3b8;--sidebar:#fff}
-body.dark{background:#0f172a;color:#f1f5f9}
-body.dark .card{background:#1e293b;border-color:#334155}
-body.dark .card-sm{background:#1e293b;border-color:#334155}
-body.dark .sidebar-item{color:#94a3b8}
-body.dark .sidebar-item:hover{background:#334155;color:#f1f5f9}
+.notif-panel{position:fixed;right:0;top:0;bottom:0;width:340px;z-index:41;animation:slideIn .2s ease-out;background:var(--surface);border-left:1px solid var(--border);box-shadow:-8px 0 40px rgba(0,0,0,.08);display:flex;flex-direction:column}
+.icon-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;background:none;border:none;cursor:pointer;color:var(--text-faint);transition:all .15s}
+.icon-btn:hover{background:var(--surface3);color:#4f46e5}
+:root{
+  --bg-main:#f0f4f8;
+  --surface:#ffffff;
+  --surface2:#f8fafc;
+  --surface3:#f1f5f9;
+  --border:#e2e8f0;
+  --border2:#f1f5f9;
+  --text-primary:#1e293b;
+  --text-secondary:#475569;
+  --text-muted:#64748b;
+  --text-faint:#94a3b8;
+  --text-placeholder:#cbd5e1;
+  --toner-black:#334155;
+  --shadow-sm:rgba(0,0,0,.04);
+  --shadow-md:rgba(0,0,0,.08);
+}
+body.dark{
+  --bg-main:#0f172a;
+  --surface:#1e293b;
+  --surface2:#334155;
+  --surface3:#1e293b;
+  --border:#334155;
+  --border2:#1e293b;
+  --text-primary:#f1f5f9;
+  --text-secondary:#94a3b8;
+  --text-muted:#64748b;
+  --text-faint:#475569;
+  --text-placeholder:#475569;
+  --toner-black:#cbd5e1;
+  --shadow-sm:rgba(0,0,0,.2);
+  --shadow-md:rgba(0,0,0,.3);
+}
 body.dark .sidebar-item.active{background:#1e1b4b;color:#a5b4fc;border-color:#4f46e5}
-body.dark .tab{background:#1e293b;border-color:#334155;color:#94a3b8}
-body.dark .tab:hover{background:#334155;color:#f1f5f9}
 body.dark .tab.t-all{background:#4f46e5;color:#fff;border-color:#4f46e5}
 body.dark .tab.t-normal{background:#14532d;color:#86efac;border-color:#166534}
 body.dark .tab.t-low{background:#78350f;color:#fcd34d;border-color:#92400e}
 body.dark .tab.t-critical{background:#7f1d1d;color:#fca5a5;border-color:#991b1b}
 body.dark .tab.t-empty{background:#1e293b;color:#64748b;border-color:#334155}
-body.dark input,body.dark textarea,body.dark select{background:#0f172a;border-color:#334155;color:#f1f5f9}
-body.dark input:focus,body.dark textarea:focus,body.dark select:focus{border-color:#6366f1;background:#1e293b;box-shadow:0 0 0 3px rgba(99,102,241,.15)}
-body.dark input::placeholder,body.dark textarea::placeholder{color:#475569}
-body.dark select option{background:#1e293b;color:#f1f5f9}
-body.dark th{color:#475569;border-color:#334155}
-body.dark td{color:#94a3b8;border-color:#1e293b}
-body.dark tr:hover td{background:#1e293b}
-body.dark .icon-btn:hover{background:#334155;color:#818cf8}
-body.dark .notif-panel{background:#1e293b;border-color:#334155}
+body.dark input:focus,body.dark textarea:focus,body.dark select:focus{border-color:#6366f1;background:var(--surface);box-shadow:0 0 0 3px rgba(99,102,241,.15)}
+body.dark .icon-btn:hover{background:var(--surface2);color:#818cf8}
 body.dark .modal-bg{background:rgba(2,6,23,.6)}
-body.dark *::-webkit-scrollbar-track{background:#1e293b}
-body.dark *::-webkit-scrollbar-thumb{background:#475569}
-body.dark .btn-use{background:#1e293b;border-color:#334155;color:#94a3b8}
 body.dark .btn-use:hover{background:#7f1d1d;border-color:#991b1b;color:#fca5a5}
-body.dark header{background:#1e293b!important;border-color:#334155!important}
-body.dark #sidebar{background:#1e293b!important;border-color:#334155!important}
 body.compact .sidebar-item{font-size:12px;padding:7px 10px}
 body.compact th{padding:8px 10px;font-size:10px}
 body.compact td{padding:8px 10px;font-size:12px}
@@ -207,9 +219,9 @@ function showToast(msg,type){
   setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(function(){t.remove();},300);},3500);
 }
 function showLoading(){
-  document.getElementById('app').innerHTML='<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#f0f4f8">'
-    +'<div style="width:44px;height:44px;border:3px solid #e2e8f0;border-top-color:#4f46e5;border-radius:50%;animation:spin .8s linear infinite"></div>'
-    +'<div style="font-size:14px;font-weight:600;color:#64748b;font-family:\'Sarabun\',sans-serif">กำลังโหลดข้อมูล…</div>'
+  document.getElementById('app').innerHTML='<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg-main)">'
+    +'<div style="width:44px;height:44px;border:3px solid var(--border);border-top-color:#4f46e5;border-radius:50%;animation:spin .8s linear infinite"></div>'
+    +'<div style="font-size:14px;font-weight:600;color:var(--text-muted);font-family:\'Sarabun\',sans-serif">กำลังโหลดข้อมูล…</div>'
     +'</div>';
 }
 async function loadFromSupabase(){
@@ -286,7 +298,7 @@ const SC={
   OUT_OF_STOCK:{label:'หมดแล้ว',c:'#64748b',bg:'#f1f5f9',br:'#cbd5e1',text:'#475569'},
 };
 const TC={
-  BLACK:{hex:'#334155',name:'ดำ'},CYAN:{hex:'#0891b2',name:'ฟ้า'},
+  BLACK:{hex:'var(--toner-black)',name:'ดำ'},CYAN:{hex:'#0891b2',name:'ฟ้า'},
   MAGENTA:{hex:'#db2777',name:'แดง'},YELLOW:{hex:'#ca8a04',name:'เหลือง'},
   WASTE:{hex:'#ea580c',name:'เสีย'},
 };
@@ -444,13 +456,13 @@ function openReasonPrompt(id,delta){
     <div class="card fade-up" style="width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden">
       <div style="height:4px;background:${tc.hex}"></div>
       <div style="padding:20px 22px">
-        <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:4px">${isInc?'เพิ่มสต็อก':'ลดสต็อก'} — ${item.name}</div>
-        <div style="font-size:12px;color:#94a3b8;margin-bottom:16px">${item.mk} · ${item.qty} → ${newQty} กล่อง</div>
-        <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">หมายเหตุ <span style="color:#94a3b8;font-weight:400">(ไม่บังคับ)</span></label>
+        <div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:4px">${isInc?'เพิ่มสต็อก':'ลดสต็อก'} — ${item.name}</div>
+        <div style="font-size:12px;color:var(--text-faint);margin-bottom:16px">${item.mk} · ${item.qty} → ${newQty} กล่อง</div>
+        <label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">หมายเหตุ <span style="color:var(--text-faint);font-weight:400">(ไม่บังคับ)</span></label>
         <input id="reason-input" type="text" placeholder="${isInc?'เช่น รับสินค้าจากซัพพลายเออร์':'เช่น เติมหมึกเครื่องพิมพ์'}"
           onkeydown="if(event.key==='Enter')confirmChangeQty('${id}',${delta})"/>
         <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-          <button onclick="closeModal()" style="padding:9px 18px;border-radius:10px;background:#fff;border:1px solid #e2e8f0;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'">ยกเลิก</button>
+          <button onclick="closeModal()" style="padding:9px 18px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='var(--surface3)'" onmouseout="this.style.background='var(--surface)'">ยกเลิก</button>
           <button onclick="confirmChangeQty('${id}',${delta})" style="padding:9px 18px;border-radius:10px;background:#4f46e5;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">ยืนยัน</button>
         </div>
       </div>
@@ -474,34 +486,34 @@ function openQtyEdit(id){
   <div class="modal-bg" onclick="if(event.target===this)closeModal()">
     <div class="card fade-up" style="width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden">
       <div style="height:4px;background:${tc.hex}"></div>
-      <div style="display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid #f1f5f9">
+      <div style="display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border2)">
         ${tonerDot(item.color,14)}
         <div style="flex:1">
-          <div style="font-size:15px;font-weight:700;color:#1e293b">${item.name} — ตั้งค่าจำนวน</div>
-          <div style="font-size:11px;color:#94a3b8;margin-top:1px">${item.model}</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text-primary)">${item.name} — ตั้งค่าจำนวน</div>
+          <div style="font-size:11px;color:var(--text-faint);margin-top:1px">${item.model}</div>
         </div>
         <button onclick="closeModal()" class="icon-btn">${I.x}</button>
       </div>
       <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
-        <div style="text-align:center;padding:14px;background:#f8fafc;border-radius:12px;border:1px solid #f1f5f9">
-          <div style="font-size:12px;color:#94a3b8;margin-bottom:4px">ปัจจุบัน</div>
+        <div style="text-align:center;padding:14px;background:var(--surface2);border-radius:12px;border:1px solid var(--border2)">
+          <div style="font-size:12px;color:var(--text-faint);margin-bottom:4px">ปัจจุบัน</div>
           <div class="mono" style="font-size:40px;font-weight:800;line-height:1;color:${tc.hex}">${item.qty}</div>
-          <div style="font-size:11px;color:#94a3b8;margin-top:4px">กล่อง</div>
+          <div style="font-size:11px;color:var(--text-faint);margin-top:4px">กล่อง</div>
         </div>
         <div>
-          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">ระบุจำนวนใหม่ <span style="font-size:11px;color:#94a3b8">(0–${item.max} กล่อง)</span></label>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">ระบุจำนวนใหม่ <span style="font-size:11px;color:var(--text-faint)">(0–${item.max} กล่อง)</span></label>
           <input id="qty-input" type="number" min="0" max="${item.max}" value="${item.qty}"
-            style="font-size:22px;font-weight:700;text-align:center;color:#1e293b"
+            style="font-size:22px;font-weight:700;text-align:center;color:var(--text-primary)"
             onkeydown="if(event.key==='Enter')document.getElementById('qty-reason').focus()"/>
         </div>
         <div>
-          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">หมายเหตุ <span style="color:#94a3b8;font-weight:400">(ไม่บังคับ)</span></label>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">หมายเหตุ <span style="color:var(--text-faint);font-weight:400">(ไม่บังคับ)</span></label>
           <input id="qty-reason" type="text" placeholder="เช่น รับสินค้าจากซัพพลายเออร์"
             onkeydown="if(event.key==='Enter')confirmQtyEdit('${id}')"/>
         </div>
       </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid #f1f5f9;background:#f8fafc">
-        <button onclick="closeModal()" style="padding:10px 20px;border-radius:10px;background:#fff;border:1px solid #e2e8f0;color:#64748b;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'">ยกเลิก</button>
+      <div style="display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border2);background:var(--surface2)">
+        <button onclick="closeModal()" style="padding:10px 20px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-muted);font-size:14px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='var(--surface3)'" onmouseout="this.style.background='var(--surface)'">ยกเลิก</button>
         <button onclick="confirmQtyEdit('${id}')" style="padding:10px 22px;border-radius:10px;background:#4f46e5;border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;box-shadow:0 2px 8px rgba(79,70,229,.3)" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">บันทึก</button>
       </div>
     </div>
@@ -571,30 +583,30 @@ function openAddItem(){
   <div class="modal-bg" onclick="if(event.target===this)closeModal()">
     <div class="card fade-up" style="width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden;max-height:92vh;display:flex;flex-direction:column">
       <div style="height:4px;background:linear-gradient(90deg,#4f46e5,#7c3aed)"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f1f5f9;flex-shrink:0">
-        <div><div style="font-size:15px;font-weight:700;color:#1e293b">เพิ่มรายการหมึกใหม่</div><div style="font-size:11px;color:#94a3b8;margin-top:2px">กรอกข้อมูลหมึกที่ต้องการเพิ่มในระบบ</div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border2);flex-shrink:0">
+        <div><div style="font-size:15px;font-weight:700;color:var(--text-primary)">เพิ่มรายการหมึกใหม่</div><div style="font-size:11px;color:var(--text-faint);margin-top:2px">กรอกข้อมูลหมึกที่ต้องการเพิ่มในระบบ</div></div>
         <button onclick="closeModal()" class="icon-btn">${I.x}</button>
       </div>
       <div style="padding:18px 20px;overflow-y:auto;flex:1;display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div style="grid-column:1/-1">
-          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">ชื่อหมึก <span style="color:#ef4444">*</span></label>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">ชื่อหมึก <span style="color:#ef4444">*</span></label>
           <input id="ai-name" type="text" placeholder="เช่น หมึกดำ, หมึกฟ้า, ถังหมึกเสีย"/>
         </div>
         <datalist id="ai-models-dl">`+dlOpts+`</datalist>
         <div style="grid-column:1/-1">
-          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">เครื่องพิมพ์ <span style="color:#ef4444">*</span></label>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">เครื่องพิมพ์ <span style="color:#ef4444">*</span></label>
           <input id="ai-model" type="text" list="ai-models-dl" placeholder="พิมพ์หรือเลือกจากรายการ…" oninput="onModelInput(this.value)" autocomplete="off"/>
         </div>
         <div>
-          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">รุ่นสั้น <span style="color:#ef4444">*</span></label>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">รุ่นสั้น <span style="color:#ef4444">*</span></label>
           <input id="ai-mk" type="text" placeholder="เช่น 4518A" style="opacity:.6" readonly/>
         </div>
         <div>
-          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">Part Number</label>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">Part Number</label>
           <input id="ai-part" type="text" placeholder="เช่น T-FC330AK"/>
         </div>
         <div>
-          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">สี <span style="color:#ef4444">*</span></label>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">สี <span style="color:#ef4444">*</span></label>
           <select id="ai-color">
             <option value="BLACK">⬛ ดำ (BLACK)</option>
             <option value="CYAN">🔵 ฟ้า (CYAN)</option>
@@ -604,40 +616,40 @@ function openAddItem(){
           </select>
         </div>
         <div>
-          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">ประเภท</label>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">ประเภท</label>
           <select id="ai-type">
             <option value="TONER">หมึกพิมพ์ (TONER)</option>
             <option value="WASTE_TONER">ถังหมึกเสีย (WASTE_TONER)</option>
           </select>
         </div>
         <div>
-          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">จำนวนเริ่มต้น</label>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">จำนวนเริ่มต้น</label>
           <input id="ai-qty" type="number" min="0" value="0"/>
         </div>
         <div>
-          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">สูงสุด</label>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">สูงสุด</label>
           <input id="ai-max" type="number" min="1" value="10"/>
         </div>
         <div>
-          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">ขั้นต่ำ (แจ้งเตือน)</label>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">ขั้นต่ำ (แจ้งเตือน)</label>
           <input id="ai-min" type="number" min="0" value="3"/>
         </div>
         <div>
-          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">วิกฤต</label>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">วิกฤต</label>
           <input id="ai-crit" type="number" min="0" value="1"/>
         </div>
         <div>
-          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">ตำแหน่งจัดเก็บ</label>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">ตำแหน่งจัดเก็บ</label>
           <input id="ai-loc" type="text" placeholder="เช่น Rack A-1"/>
         </div>
         <div>
-          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">ซัพพลายเออร์</label>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">ซัพพลายเออร์</label>
           <input id="ai-sup" type="text" placeholder="เช่น Toshiba Thailand"/>
         </div>
         <div id="ai-err" style="grid-column:1/-1;display:none;font-size:13px;color:#dc2626;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;font-weight:500"></div>
       </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid #f1f5f9;background:#f8fafc;flex-shrink:0">
-        <button onclick="closeModal()" style="padding:10px 20px;border-radius:10px;background:#fff;border:1px solid #e2e8f0;color:#64748b;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'">ยกเลิก</button>
+      <div style="display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border2);background:var(--surface2);flex-shrink:0">
+        <button onclick="closeModal()" style="padding:10px 20px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-muted);font-size:14px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='var(--surface3)'" onmouseout="this.style.background='var(--surface)'">ยกเลิก</button>
         <button onclick="confirmAddItem()" style="padding:10px 22px;border-radius:10px;background:#4f46e5;border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;box-shadow:0 2px 8px rgba(79,70,229,.3)" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">+ เพิ่มรายการ</button>
       </div>
     </div>
@@ -679,7 +691,7 @@ function renderLogin(){
   const errHtml=isReg&&S.regErr?'<div style="font-size:13px;color:#dc2626;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;font-weight:500">'+S.regErr+'</div>':'';
   const okHtml=!isReg&&S.regOk?'<div style="font-size:13px;color:#16a34a;background:#dcfce7;border:1px solid #86efac;border-radius:10px;padding:10px 14px;font-weight:500">'+S.regOk+'</div>':'';
   const loginErrHtml=!isReg&&S.loginErr?'<div style="font-size:13px;color:#dc2626;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;font-weight:500">'+S.loginErr+'</div>':'';
-  const eyeStyle='position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;display:flex;padding:0';
+  const eyeStyle='position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-faint);display:flex;padding:0';
   const eyeBtn='<button id="eye-lp" onclick="togglePassVis(\'lp\',\'eye-lp\',\'showPass\')" style="'+eyeStyle+'">'+(S.showPass?I.eyeoff:I.eye)+'</button>';
   const eyeBtn2='<button id="eye-rp" onclick="togglePassVis(\'rp\',\'eye-rp\',\'showPass\')" style="'+eyeStyle+'">'+(S.showPass?I.eyeoff:I.eye)+'</button>';
   const eyeBtn3='<button id="eye-rp2" onclick="togglePassVis(\'rp2\',\'eye-rp2\',\'showPass2\')" style="'+eyeStyle+'">'+(S.showPass2?I.eyeoff:I.eye)+'</button>';
@@ -687,25 +699,25 @@ function renderLogin(){
   let formHtml;
   if(isReg){
     formHtml='<div style="display:flex;flex-direction:column;gap:12px">'
-      +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px">ชื่อผู้ใช้ <span style="color:#ef4444">*</span></label>'
+      +'<div><label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:5px">ชื่อผู้ใช้ <span style="color:#ef4444">*</span></label>'
       +'<input id="ru" type="text" value="'+esc(d.u)+'" placeholder="ตัวอักษรภาษาอังกฤษ ตัวเลข" autocomplete="username" oninput="S.regDraft.u=this.value" onkeydown="if(event.key===\'Enter\')document.getElementById(\'rn\').focus()"/></div>'
-      +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px">ชื่อ-นามสกุล <span style="color:#ef4444">*</span></label>'
+      +'<div><label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:5px">ชื่อ-นามสกุล <span style="color:#ef4444">*</span></label>'
       +'<input id="rn" type="text" value="'+esc(d.fn)+'" placeholder="ชื่อที่แสดงในระบบ" oninput="S.regDraft.fn=this.value" onkeydown="if(event.key===\'Enter\')document.getElementById(\'re\').focus()"/></div>'
-      +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px">อีเมล <span style="color:#ef4444">*</span></label>'
+      +'<div><label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:5px">อีเมล <span style="color:#ef4444">*</span></label>'
       +'<input id="re" type="email" value="'+esc(d.em)+'" placeholder="example@company.com" oninput="S.regDraft.em=this.value" onkeydown="if(event.key===\'Enter\')document.getElementById(\'rp\').focus()"/></div>'
-      +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px">รหัสผ่าน <span style="color:#ef4444">*</span></label>'
+      +'<div><label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:5px">รหัสผ่าน <span style="color:#ef4444">*</span></label>'
       +'<div style="position:relative"><input id="rp" type="'+(S.showPass?'text':'password')+'" value="'+esc(d.p)+'" placeholder="อย่างน้อย 6 ตัวอักษร" style="padding-right:40px" oninput="S.regDraft.p=this.value" onkeydown="if(event.key===\'Enter\')document.getElementById(\'rp2\').focus()"/>'+eyeBtn2+'</div></div>'
-      +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px">ยืนยันรหัสผ่าน <span style="color:#ef4444">*</span></label>'
+      +'<div><label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:5px">ยืนยันรหัสผ่าน <span style="color:#ef4444">*</span></label>'
       +'<div style="position:relative"><input id="rp2" type="'+(S.showPass2?'text':'password')+'" value="'+esc(d.p2)+'" placeholder="กรอกรหัสผ่านอีกครั้ง" style="padding-right:40px" oninput="S.regDraft.p2=this.value" onkeydown="if(event.key===\'Enter\')doRegister()"/>'+eyeBtn3+'</div></div>'
       +errHtml
       +'<button onclick="doRegister()" style="width:100%;padding:12px;border-radius:12px;background:#4f46e5;color:#fff;font-size:15px;font-weight:700;cursor:pointer;border:none;margin-top:2px;box-shadow:0 4px 12px rgba(79,70,229,.3);font-family:\'Sarabun\',sans-serif" onmouseover="this.style.background=\'#4338ca\'" onmouseout="this.style.background=\'#4f46e5\'">สมัครสมาชิก</button>'
-      +'<div style="font-size:12px;color:#94a3b8;background:#f8fafc;border-radius:8px;padding:8px 12px">บัญชีใหม่จะเป็นผู้ชมก่อน หากต้องการแก้สต็อกให้ Admin ปรับสิทธิ์ให้</div>'
+      +'<div style="font-size:12px;color:var(--text-faint);background:var(--surface2);border-radius:8px;padding:8px 12px">บัญชีใหม่จะเป็นผู้ชมก่อน หากต้องการแก้สต็อกให้ Admin ปรับสิทธิ์ให้</div>'
       +'</div>';
   } else {
     formHtml='<div style="display:flex;flex-direction:column;gap:14px">'
-      +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">ชื่อผู้ใช้</label>'
+      +'<div><label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">ชื่อผู้ใช้</label>'
       +'<input id="lu" type="text" placeholder="กรอกชื่อผู้ใช้" autocomplete="username" onkeydown="if(event.key===\'Enter\')document.getElementById(\'lp\').focus()"/></div>'
-      +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">รหัสผ่าน</label>'
+      +'<div><label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">รหัสผ่าน</label>'
       +'<div style="position:relative"><input id="lp" type="'+(S.showPass?'text':'password')+'" placeholder="กรอกรหัสผ่าน" autocomplete="current-password" onkeydown="if(event.key===\'Enter\')doLogin()" style="padding-right:40px"/>'+eyeBtn+'</div></div>'
       +loginErrHtml+okHtml
       +'<button onclick="doLogin()" style="width:100%;padding:12px;border-radius:12px;background:#4f46e5;color:#fff;font-size:15px;font-weight:700;cursor:pointer;border:none;margin-top:4px;box-shadow:0 4px 12px rgba(79,70,229,.3);font-family:\'Sarabun\',sans-serif" onmouseover="this.style.background=\'#4338ca\'" onmouseout="this.style.background=\'#4f46e5\'">เข้าสู่ระบบ</button>'
@@ -719,16 +731,16 @@ function renderLogin(){
     +'<div style="padding:28px">'
     +'<div style="text-align:center;margin-bottom:24px">'
     +'<div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#4f46e5,#7c3aed);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;box-shadow:0 4px 16px rgba(79,70,229,.3);color:#fff">'+I.printer+'</div>'
-    +'<div style="font-size:21px;font-weight:700;color:#1e293b">TonerTrack</div>'
-    +'<div style="font-size:12px;color:#94a3b8;margin-top:3px">'+(isReg?'สร้างบัญชีใหม่':'ระบบจัดการสต็อกหมึกพิมพ์ · IT')+'</div>'
+    +'<div style="font-size:21px;font-weight:700;color:var(--text-primary)">TonerTrack</div>'
+    +'<div style="font-size:12px;color:var(--text-faint);margin-top:3px">'+(isReg?'สร้างบัญชีใหม่':'ระบบจัดการสต็อกหมึกพิมพ์ · IT')+'</div>'
     +'</div>'
-    +'<div style="display:flex;border-radius:10px;background:#f1f5f9;padding:3px;gap:3px;margin-bottom:20px">'
-    +'<button onclick="S.mode=\'login\';S.loginErr=\'\';S.regErr=\'\';renderLogin()" style="flex:1;padding:8px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Sarabun\',sans-serif;transition:all .15s;background:'+(isReg?'none':'#fff')+';color:'+(isReg?'#94a3b8':'#4f46e5')+';box-shadow:'+(isReg?'none':'0 1px 3px rgba(0,0,0,.08)')+'">เข้าสู่ระบบ</button>'
-    +'<button onclick="S.mode=\'register\';S.loginErr=\'\';S.regErr=\'\';renderLogin()" style="flex:1;padding:8px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Sarabun\',sans-serif;transition:all .15s;background:'+(isReg?'#fff':'none')+';color:'+(isReg?'#4f46e5':'#94a3b8')+';box-shadow:'+(isReg?'0 1px 3px rgba(0,0,0,.08)':'none')+'">สมัครสมาชิก</button>'
+    +'<div style="display:flex;border-radius:10px;background:var(--surface3);padding:3px;gap:3px;margin-bottom:20px">'
+    +'<button onclick="S.mode=\'login\';S.loginErr=\'\';S.regErr=\'\';renderLogin()" style="flex:1;padding:8px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Sarabun\',sans-serif;transition:all .15s;background:'+(isReg?'none':'var(--surface)')+';color:'+(isReg?'var(--text-faint)':'#4f46e5')+';box-shadow:'+(isReg?'none':'0 1px 3px rgba(0,0,0,.08)')+'">เข้าสู่ระบบ</button>'
+    +'<button onclick="S.mode=\'register\';S.loginErr=\'\';S.regErr=\'\';renderLogin()" style="flex:1;padding:8px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Sarabun\',sans-serif;transition:all .15s;background:'+(isReg?'var(--surface)':'none')+';color:'+(isReg?'#4f46e5':'var(--text-faint)')+';box-shadow:'+(isReg?'0 1px 3px rgba(0,0,0,.08)':'none')+'">สมัครสมาชิก</button>'
     +'</div>'
     +formHtml
     +'</div></div>'
-    +'<div style="text-align:center;font-size:11px;color:#cbd5e1;margin-top:14px">แผนก IT · โรงงานผลิตยา · ระบบภายใน</div>'
+    +'<div style="text-align:center;font-size:11px;color:var(--text-placeholder);margin-top:14px">แผนก IT · โรงงานผลิตยา · ระบบภายใน</div>'
     +'</div></div>';
 
   const focusId=isReg?'ru':'lu';
@@ -738,11 +750,11 @@ function renderLogin(){
 // ─── SHELL ────────────────────────────────────────────────────
 function renderShell(){
   document.getElementById('app').innerHTML=`
-  <div style="display:flex;height:100vh;overflow:hidden;background:#f0f4f8">
-    <aside id="sidebar" style="flex-shrink:0;display:flex;flex-direction:column;width:${S.sidebarOpen?'220px':'64px'};transition:width .2s ease;background:#fff;border-right:1px solid #e2e8f0;z-index:20;overflow:hidden">
-      <div style="display:flex;align-items:center;gap:10px;padding:14px 12px;border-bottom:1px solid #f1f5f9;height:57px;flex-shrink:0">
+  <div style="display:flex;height:100vh;overflow:hidden;background:var(--bg-main)">
+    <aside id="sidebar" style="flex-shrink:0;display:flex;flex-direction:column;width:${S.sidebarOpen?'220px':'64px'};transition:width .2s ease;background:var(--surface);border-right:1px solid var(--border);z-index:20;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:10px;padding:14px 12px;border-bottom:1px solid var(--border2);height:57px;flex-shrink:0">
         <div style="flex-shrink:0;width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);display:flex;align-items:center;justify-content:center;color:#fff">${I.printer}</div>
-        <div style="overflow:hidden;white-space:nowrap;opacity:${S.sidebarOpen?1:0};transition:opacity .2s"><div style="font-size:14px;font-weight:700;color:#1e293b">TonerTrack</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">สต็อกหมึกพิมพ์</div></div>
+        <div style="overflow:hidden;white-space:nowrap;opacity:${S.sidebarOpen?1:0};transition:opacity .2s"><div style="font-size:14px;font-weight:700;color:var(--text-primary)">TonerTrack</div><div style="font-size:10px;color:var(--text-faint);margin-top:1px">สต็อกหมึกพิมพ์</div></div>
       </div>
       <nav style="flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:2px">
         ${[['dashboard','home','แดชบอร์ด'],['inventory','cube','คลังหมึก'],['history','clock','ประวัติ'],['settings','cog','ตั้งค่า'],...(isAdmin()?[['users','users','จัดการผู้ใช้']]:[])]
@@ -751,10 +763,10 @@ function renderShell(){
           <span style="flex-shrink:0">${I[ic]}</span><span style="overflow:hidden;opacity:${S.sidebarOpen?1:0};transition:opacity .15s">${lb}</span>
         </div>`).join('')}
       </nav>
-      <div style="padding:8px;border-top:1px solid #f1f5f9;flex-shrink:0">
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:4px;border-radius:10px;background:#f8fafc;overflow:hidden;opacity:${S.sidebarOpen?1:0};transition:opacity .15s;min-height:42px">
+      <div style="padding:8px;border-top:1px solid var(--border2);flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:4px;border-radius:10px;background:var(--surface2);overflow:hidden;opacity:${S.sidebarOpen?1:0};transition:opacity .15s;min-height:42px">
           <div style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:#ede9fe;border:2px solid #c4b5fd;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#4f46e5">${S.user?.fullName?.charAt(0)||'U'}</div>
-          <div style="min-width:0"><div style="font-size:12px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${S.user?.fullName||''}</div><div style="font-size:10px;color:#94a3b8">${S.user?.role?.toLowerCase()||''}</div></div>
+          <div style="min-width:0"><div style="font-size:12px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${S.user?.fullName||''}</div><div style="font-size:10px;color:var(--text-faint)">${S.user?.role?.toLowerCase()||''}</div></div>
         </div>
         <div class="sidebar-item" style="color:#ef4444;white-space:nowrap" onclick="doLogout()" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background=''">
           <span style="flex-shrink:0">${I.logout}</span><span style="overflow:hidden;opacity:${S.sidebarOpen?1:0};transition:opacity .15s">ออกจากระบบ</span>
@@ -762,7 +774,7 @@ function renderShell(){
       </div>
     </aside>
     <div style="flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden">
-      <header style="display:flex;align-items:center;justify-content:space-between;padding:0 18px;height:57px;flex-shrink:0;background:#fff;border-bottom:1px solid #e2e8f0">
+      <header style="display:flex;align-items:center;justify-content:space-between;padding:0 18px;height:57px;flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border)">
         <div style="display:flex;align-items:center;gap:10px">
           <button class="icon-btn" onclick="S.sidebarOpen=!S.sidebarOpen;const sb=document.getElementById('sidebar');sb.style.width=S.sidebarOpen?'220px':'64px';sb.querySelectorAll('[data-fade]').forEach(el=>el.style.opacity=S.sidebarOpen?1:0)">${I.bars}</button>
           <div id="header-title"></div>
@@ -797,7 +809,7 @@ function renderKPI(st){
   return`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">
   ${cards.map((c,i)=>`
   <div class="card fade-up" style="padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);animation-delay:${i*40}ms">
-    <div style="font-size:12px;color:#94a3b8;font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">${c.label}</div>
+    <div style="font-size:12px;color:var(--text-faint);font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">${c.label}</div>
     <div style="display:flex;align-items:center;justify-content:space-between">
       <div style="font-size:38px;font-weight:800;color:${c.c};font-family:'JetBrains Mono',monospace;line-height:1">${c.val}</div>
       <div style="width:38px;height:38px;border-radius:10px;background:${c.bg};border:1px solid ${c.border};display:flex;align-items:center;justify-content:center;flex-shrink:0"></div>
@@ -817,7 +829,7 @@ function renderAlerts(){
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
     <div style="display:flex;align-items:center;gap:8px">
       <span style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block;flex-shrink:0" class="pulse-r"></span>
-      <span style="font-size:15px;font-weight:700;color:#1e293b">ศูนย์แจ้งเตือน</span>
+      <span style="font-size:15px;font-weight:700;color:var(--text-primary)">ศูนย์แจ้งเตือน</span>
     </div>
     <div style="display:flex;gap:6px">
       ${crit.length?`<span style="font-size:11px;padding:3px 10px;border-radius:99px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;font-weight:700">${I.fire} ${crit.length} วิกฤต</span>`:''}
@@ -830,8 +842,8 @@ function renderAlerts(){
     <span style="color:${nc.c};flex-shrink:0;margin-top:2px">${I[nc.icon]}</span>
     <div>
       <div style="font-size:13px;font-weight:700;color:${nc.c};margin-bottom:2px">${n.title}</div>
-      <div style="font-size:12px;color:#475569">${n.msg}</div>
-      <div style="font-size:11px;color:#94a3b8;margin-top:4px">${ago(n.date)}</div>
+      <div style="font-size:12px;color:var(--text-secondary)">${n.msg}</div>
+      <div style="font-size:11px;color:var(--text-faint);margin-top:4px">${ago(n.date)}</div>
     </div>
   </div>`}).join('')}
   </div></div>`;
@@ -849,21 +861,21 @@ function renderCard(item,idx,context){
   const isDash=context==='dashboard';
 
   // Pre-compute to avoid triple-nested template literals
-  const borderExtra=st==='CRITICAL'?'border-color:#fca5a5;box-shadow:0 0 0 3px rgba(220,38,38,.06);':st==='OUT_OF_STOCK'?'border-color:#cbd5e1;opacity:.75;':'';
+  const borderExtra=st==='CRITICAL'?'border-color:#fca5a5;box-shadow:0 0 0 3px rgba(220,38,38,.06);':st==='OUT_OF_STOCK'?'border-color:var(--text-placeholder);opacity:.75;':'';
   const wrapStyle='overflow:hidden;'+borderExtra+'animation-delay:'+(idx*35)+'ms';
   const qtyColor=isEmpty?'#cbd5e1':tc.hex;
   const qtyLabel=isEmpty?'หมดแล้ว':'กล่อง';
-  const locLine=item.loc?`<div style="font-size:11px;color:#94a3b8;margin-bottom:12px;display:flex;align-items:center;gap:4px">${I.map} ${item.loc}</div>`:'';
-  const locCenter=item.loc?`<div style="font-size:11px;color:#94a3b8;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:4px">${I.map} ${item.loc}</div>`:'';
-  const minMax=`<div style="display:flex;justify-content:space-between;margin-top:5px"><span style="font-size:11px;color:#94a3b8">ขั้นต่ำ <span class="mono" style="color:#475569;font-weight:600">${item.min}</span></span><span style="font-size:11px;color:#94a3b8">สูงสุด <span class="mono" style="color:#475569;font-weight:600">${item.max}</span></span></div>`;
+  const locLine=item.loc?`<div style="font-size:11px;color:var(--text-faint);margin-bottom:12px;display:flex;align-items:center;gap:4px">${I.map} ${item.loc}</div>`:'';
+  const locCenter=item.loc?`<div style="font-size:11px;color:var(--text-faint);margin-top:10px;display:flex;align-items:center;justify-content:center;gap:4px">${I.map} ${item.loc}</div>`:'';
+  const minMax=`<div style="display:flex;justify-content:space-between;margin-top:5px"><span style="font-size:11px;color:var(--text-faint)">ขั้นต่ำ <span class="mono" style="color:var(--text-secondary);font-weight:600">${item.min}</span></span><span style="font-size:11px;color:var(--text-faint)">สูงสุด <span class="mono" style="color:var(--text-secondary);font-weight:600">${item.max}</span></span></div>`;
   const progressBar=`<div class="progress-track"><div class="progress-fill" style="width:${p}%;background:${pcol}"></div></div>`;
 
   // ── Dashboard card: minimal ───────────────────────────────
   if(isDash){
     const dashActions=canEdit?`
-    <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding-top:10px;border-top:1px solid #f1f5f9">
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding-top:10px;border-top:1px solid var(--border2)">
       <button class="btn-use" onclick="changeQty('${item.id}',-1)" ${isEmpty?'disabled':''} style="padding:7px 12px;font-size:12px">${I.minus} ใช้แล้ว</button>
-      <button onclick="openQtyEdit('${item.id}')" class="mono" style="font-size:14px;font-weight:800;color:#1e293b;min-width:22px;text-align:center;background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:8px" title="คลิกเพื่อตั้งค่าจำนวน" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''">${item.qty}</button>
+      <button onclick="openQtyEdit('${item.id}')" class="mono" style="font-size:14px;font-weight:800;color:var(--text-primary);min-width:22px;text-align:center;background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:8px" title="คลิกเพื่อตั้งค่าจำนวน" onmouseover="this.style.background='var(--surface3)'" onmouseout="this.style.background=''">${item.qty}</button>
       <button class="btn-add" onclick="changeQty('${item.id}',1)" style="padding:7px 12px;font-size:12px">${I.plus} เติม</button>
     </div>`:'';
     return`<div data-card="${item.id}" data-context="dashboard" class="card card-hover fade-up" style="${wrapStyle}">
@@ -872,14 +884,14 @@ function renderCard(item,idx,context){
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">
       <div style="display:flex;align-items:center;gap:7px">
         ${tonerDot(item.color,11)}
-        <span style="font-size:14px;font-weight:700;color:#1e293b">${item.name}</span>
+        <span style="font-size:14px;font-weight:700;color:var(--text-primary)">${item.name}</span>
       </div>
       ${badge(st)}
     </div>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:${canEdit?10:0}px">
       <div style="text-align:center;min-width:54px">
         <div class="mono" style="font-size:${isEmpty?36:44}px;font-weight:800;line-height:1;color:${qtyColor}">${item.qty}</div>
-        <div style="font-size:10px;color:#94a3b8;margin-top:2px">${qtyLabel}</div>
+        <div style="font-size:10px;color:var(--text-faint);margin-top:2px">${qtyLabel}</div>
       </div>
       <div style="flex:1">${progressBar}</div>
     </div>
@@ -890,29 +902,29 @@ function renderCard(item,idx,context){
   const invBody=!canEdit?`
     <div style="text-align:center;padding:8px 0 14px">
       <div class="mono" style="font-size:${isEmpty?52:64}px;font-weight:800;line-height:1;color:${qtyColor}">${item.qty}</div>
-      <div style="font-size:12px;color:#94a3b8;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:.06em">${qtyLabel}</div>
+      <div style="font-size:12px;color:var(--text-faint);margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:.06em">${qtyLabel}</div>
       <div style="margin-top:12px">${progressBar}${minMax}</div>
       ${locCenter}
     </div>`:`
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
       <div style="text-align:center;min-width:64px">
-        <div class="mono" onclick="openQtyEdit('${item.id}')" title="คลิกเพื่อตั้งค่าจำนวน" style="font-size:${isEmpty?38:46}px;font-weight:800;line-height:1;color:${qtyColor};cursor:pointer;padding:4px 6px;border-radius:10px;transition:background .15s" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">${item.qty}</div>
-        <div style="font-size:10px;color:#94a3b8;margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.06em">${qtyLabel}</div>
+        <div class="mono" onclick="openQtyEdit('${item.id}')" title="คลิกเพื่อตั้งค่าจำนวน" style="font-size:${isEmpty?38:46}px;font-weight:800;line-height:1;color:${qtyColor};cursor:pointer;padding:4px 6px;border-radius:10px;transition:background .15s" onmouseover="this.style.background='var(--surface3)'" onmouseout="this.style.background='transparent'">${item.qty}</div>
+        <div style="font-size:10px;color:var(--text-faint);margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.06em">${qtyLabel}</div>
       </div>
       <div style="flex:1">
         <div style="display:flex;justify-content:space-between;margin-bottom:5px">
-          <span style="font-size:11px;color:#94a3b8;font-weight:500">ระดับสต็อก</span>
-          <span class="mono" style="font-size:11px;color:#64748b;font-weight:600">${p}%</span>
+          <span style="font-size:11px;color:var(--text-faint);font-weight:500">ระดับสต็อก</span>
+          <span class="mono" style="font-size:11px;color:var(--text-muted);font-weight:600">${p}%</span>
         </div>
         ${progressBar}${minMax}
       </div>
     </div>
     ${locLine}
-    <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid #f1f5f9">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--border2)">
       ${canEditSettings?`<button class="icon-btn" onclick="openSettings('${item.id}')" title="ตั้งค่า">${I.cog}</button>`:`<span style="width:34px;height:34px;display:inline-block"></span>`}
       <div style="display:flex;align-items:center;gap:8px">
         <button class="btn-use" onclick="changeQty('${item.id}',-1)" ${isEmpty?'disabled':''}>${I.minus} ใช้แล้ว</button>
-        <button onclick="openQtyEdit('${item.id}')" class="mono" title="คลิกเพื่อตั้งค่าจำนวน" style="font-size:15px;font-weight:800;color:#1e293b;min-width:20px;text-align:center;background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:8px" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''">${item.qty}</button>
+        <button onclick="openQtyEdit('${item.id}')" class="mono" title="คลิกเพื่อตั้งค่าจำนวน" style="font-size:15px;font-weight:800;color:var(--text-primary);min-width:20px;text-align:center;background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:8px" onmouseover="this.style.background='var(--surface3)'" onmouseout="this.style.background=''">${item.qty}</button>
         <button class="btn-add" onclick="changeQty('${item.id}',1)">${I.plus} เติม</button>
       </div>
     </div>`;
@@ -923,9 +935,9 @@ function renderCard(item,idx,context){
       <div>
         <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
           ${tonerDot(item.color,11)}
-          <span style="font-size:15px;font-weight:700;color:#1e293b">${item.name}</span>
+          <span style="font-size:15px;font-weight:700;color:var(--text-primary)">${item.name}</span>
         </div>
-        <div style="font-size:11px;color:#94a3b8">${item.mk} · <span style="font-family:'JetBrains Mono',monospace">${item.part}</span></div>
+        <div style="font-size:11px;color:var(--text-faint)">${item.mk} · <span style="font-family:'JetBrains Mono',monospace">${item.part}</span></div>
       </div>
       ${badge(st)}
     </div>
@@ -936,7 +948,7 @@ function renderCard(item,idx,context){
 // ─── GROUPED CARDS ────────────────────────────────────────────
 function renderGroupedCards(items,context){
   context=context||'inventory';
-  if(!items.length)return`<div style="text-align:center;padding:60px;color:#94a3b8">
+  if(!items.length)return`<div style="text-align:center;padding:60px;color:var(--text-faint)">
     <div style="font-size:36px;margin-bottom:12px">📦</div>
     <div style="font-size:14px;font-weight:500">ไม่พบรายการที่ตรงกับตัวกรอง</div>
   </div>`;
@@ -950,13 +962,13 @@ function renderGroupedCards(items,context){
     const mItems=grouped[model];
     const mSt=mItems.reduce((a,i)=>{const s=status(i);if(s==='OUT_OF_STOCK')a.out++;else if(s==='CRITICAL')a.crit++;else if(s==='LOW')a.low++;else a.ok++;return a;},{ok:0,low:0,crit:0,out:0});
     return`<div style="margin-bottom:28px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid #f1f5f9">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid var(--border2)">
         <div style="width:6px;height:24px;border-radius:99px;background:${mc};flex-shrink:0"></div>
         <div>
-          <div style="font-size:16px;font-weight:700;color:#1e293b">${model}</div>
-          <div style="font-size:12px;color:#94a3b8;margin-top:2px">
+          <div style="font-size:16px;font-weight:700;color:var(--text-primary)">${model}</div>
+          <div style="font-size:12px;color:var(--text-faint);margin-top:2px">
             ${mItems.length} รายการ
-            ${mSt.out?` · <span style="color:#64748b;font-weight:600">${mSt.out} หมดแล้ว</span>`:''}
+            ${mSt.out?` · <span style="color:var(--text-muted);font-weight:600">${mSt.out} หมดแล้ว</span>`:''}
             ${mSt.crit?` · <span style="color:#dc2626;font-weight:600">${mSt.crit} วิกฤต</span>`:''}
             ${mSt.low?` · <span style="color:#d97706;font-weight:600">${mSt.low} ใกล้หมด</span>`:''}
           </div>
@@ -981,7 +993,7 @@ function renderFilters(items){
 
 // ─── DASHBOARD ────────────────────────────────────────────────
 function renderDashboard(){
-  document.getElementById('header-title').innerHTML=`<div><div style="font-size:15px;font-weight:700;color:#1e293b">แดชบอร์ด</div><div style="font-size:11px;color:#94a3b8;margin-top:1px">ภาพรวมสต็อกหมึกพิมพ์</div></div>`;
+  document.getElementById('header-title').innerHTML=`<div><div style="font-size:15px;font-weight:700;color:var(--text-primary)">แดชบอร์ด</div><div style="font-size:11px;color:var(--text-faint);margin-top:1px">ภาพรวมสต็อกหมึกพิมพ์</div></div>`;
   let items=[...S.inventory];
   if(S.filter!=='ALL')items=items.filter(i=>status(i)===S.filter);
   if(S.search.trim()){const q=S.search.toLowerCase();items=items.filter(i=>i.name.toLowerCase().includes(q)||i.model.toLowerCase().includes(q)||i.color.toLowerCase().includes(q));}
@@ -992,12 +1004,12 @@ function renderDashboard(){
     ${renderAlerts()?`<div style="margin-top:14px">${renderAlerts()}</div>`:''}
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0 12px;flex-wrap:wrap">
       <div>
-        <span style="font-size:15px;font-weight:700;color:#1e293b">สถานะคลังหมึก</span>
-        <span style="font-size:12px;color:#94a3b8;margin-left:8px">แสดง ${items.length} จาก ${S.inventory.length} รายการ</span>
+        <span style="font-size:15px;font-weight:700;color:var(--text-primary)">สถานะคลังหมึก</span>
+        <span style="font-size:12px;color:var(--text-faint);margin-left:8px">แสดง ${items.length} จาก ${S.inventory.length} รายการ</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <div style="position:relative">
-          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8">${I.search}</span>
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-faint)">${I.search}</span>
           <input id="search-input" type="text" placeholder="ค้นหาหมึก, รุ่นเครื่อง…" value="${esc(S.search)}" oninput="setSearch(this.value)" style="padding-left:34px;width:180px"/>
         </div>
         ${renderFilters(S.inventory)}
@@ -1009,7 +1021,7 @@ function renderDashboard(){
 
 // ─── INVENTORY ────────────────────────────────────────────────
 function renderInventory(){
-  document.getElementById('header-title').innerHTML=`<div style="font-size:15px;font-weight:700;color:#1e293b">คลังหมึก</div>`;
+  document.getElementById('header-title').innerHTML=`<div style="font-size:15px;font-weight:700;color:var(--text-primary)">คลังหมึก</div>`;
   let items=[...S.inventory];
   if(S.filter!=='ALL')items=items.filter(i=>status(i)===S.filter);
   if(S.search.trim()){const q=S.search.toLowerCase();items=items.filter(i=>i.name.toLowerCase().includes(q)||i.model.toLowerCase().includes(q)||i.loc?.toLowerCase().includes(q));}
@@ -1018,18 +1030,18 @@ function renderInventory(){
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap">
       ${renderFilters(S.inventory)}
       <div style="position:relative">
-        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8">${I.search}</span>
+        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-faint)">${I.search}</span>
         <input id="search-input" type="text" placeholder="ค้นหา…" value="${esc(S.search)}" oninput="setSearch(this.value)" style="padding-left:34px;width:160px"/>
       </div>
     </div>
-    <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">แสดง ${items.length} จาก ${S.inventory.length} รายการ</div>
+    <div style="font-size:12px;color:var(--text-faint);margin-bottom:12px">แสดง ${items.length} จาก ${S.inventory.length} รายการ</div>
     ${renderGroupedCards(items,'inventory')}
   </div>`;
 }
 
 // ─── HISTORY ──────────────────────────────────────────────────
 function renderHistory(){
-  document.getElementById('header-title').innerHTML=`<div style="font-size:15px;font-weight:700;color:#1e293b">ประวัติการเปลี่ยนแปลง</div>`;
+  document.getElementById('header-title').innerHTML=`<div style="font-size:15px;font-weight:700;color:var(--text-primary)">ประวัติการเปลี่ยนแปลง</div>`;
   const perPage=20,start=(S.histPage-1)*perPage;
   const recs=S.history.slice(start,start+perPage);
   const totalPages=Math.ceil(S.history.length/perPage);
@@ -1042,25 +1054,25 @@ function renderHistory(){
           <th>เวลา</th><th>สินค้า</th><th>เครื่อง</th><th>ประเภท</th><th>เปลี่ยน</th><th>จำนวน</th><th>เหตุผล</th><th>ผู้แก้ไข</th>
         </tr></thead>
         <tbody>
-        ${recs.length===0?`<tr><td colspan="8" style="text-align:center;padding:50px;color:#94a3b8">ไม่มีประวัติการเปลี่ยนแปลง</td></tr>`:
+        ${recs.length===0?`<tr><td colspan="8" style="text-align:center;padding:50px;color:var(--text-faint)">ไม่มีประวัติการเปลี่ยนแปลง</td></tr>`:
         recs.map(r=>{
           const ct=CTC[r.ct]||CTC.DECREASE;const delta=r.nq-r.oq;
           return`<tr>
-            <td class="mono" style="font-size:12px;color:#94a3b8;white-space:nowrap">${fmtDt(r.date)}</td>
-            <td><div style="display:flex;align-items:center;gap:6px">${tonerDot(r.color,8)}<span style="font-weight:600;color:#1e293b">${r.name}</span></div></td>
-            <td><span style="font-size:12px;padding:2px 8px;border-radius:6px;background:#f1f5f9;color:#64748b;font-weight:600">${r.mk}</span></td>
+            <td class="mono" style="font-size:12px;color:var(--text-faint);white-space:nowrap">${fmtDt(r.date)}</td>
+            <td><div style="display:flex;align-items:center;gap:6px">${tonerDot(r.color,8)}<span style="font-weight:600;color:var(--text-primary)">${r.name}</span></div></td>
+            <td><span style="font-size:12px;padding:2px 8px;border-radius:6px;background:var(--surface3);color:var(--text-muted);font-weight:600">${r.mk}</span></td>
             <td><span style="padding:3px 10px;border-radius:6px;font-size:12px;font-weight:700;background:${ct.bg};color:${ct.c}">${ct.label}</span></td>
-            <td class="mono" style="font-weight:800;font-size:15px;color:${delta>0?'#16a34a':delta<0?'#dc2626':'#64748b'}">${delta>0?'+':''}${delta}</td>
-            <td class="mono" style="color:#94a3b8">${r.oq} → ${r.nq}</td>
-            <td style="color:#475569;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.reason||'—'}</td>
-            <td style="color:#475569;white-space:nowrap">${r.user||'System'}</td>
+            <td class="mono" style="font-weight:800;font-size:15px;color:${delta>0?'#16a34a':delta<0?'#dc2626':'var(--text-muted)'}">${delta>0?'+':''}${delta}</td>
+            <td class="mono" style="color:var(--text-faint)">${r.oq} → ${r.nq}</td>
+            <td style="color:var(--text-secondary);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.reason||'—'}</td>
+            <td style="color:var(--text-secondary);white-space:nowrap">${r.user||'System'}</td>
           </tr>`;}).join('')}
         </tbody>
       </table>
       </div>
     </div>
     ${totalPages>1?`<div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
-      <span style="font-size:12px;color:#94a3b8">หน้า ${S.histPage} จาก ${totalPages} · ทั้งหมด ${S.history.length} รายการ</span>
+      <span style="font-size:12px;color:var(--text-faint)">หน้า ${S.histPage} จาก ${totalPages} · ทั้งหมด ${S.history.length} รายการ</span>
       <div style="display:flex;gap:6px">
         ${S.histPage>1?`<button class="tab" onclick="S.histPage--;renderContent()">← ก่อนหน้า</button>`:''}
         ${S.histPage<totalPages?`<button class="tab" onclick="S.histPage++;renderContent()">ถัดไป →</button>`:''}
@@ -1072,7 +1084,7 @@ function renderHistory(){
 // ─── SETTINGS ─────────────────────────────────────────────────
 function renderSettings(){
   const addBtn=isAdmin()?'<button onclick="openAddItem()" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:#4f46e5;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Sarabun\',sans-serif;box-shadow:0 2px 8px rgba(79,70,229,.25)" onmouseover="this.style.background=\'#4338ca\'" onmouseout="this.style.background=\'#4f46e5\'">'+I.plus+' เพิ่มหมึก</button>':'';
-  document.getElementById('header-title').innerHTML='<div style="display:flex;align-items:center;gap:14px"><div><div style="font-size:15px;font-weight:700;color:#1e293b">ตั้งค่า</div><div style="font-size:11px;color:#94a3b8;margin-top:1px">จัดการเกณฑ์สต็อกและรายการหมึก</div></div>'+addBtn+'</div>';
+  document.getElementById('header-title').innerHTML='<div style="display:flex;align-items:center;gap:14px"><div><div style="font-size:15px;font-weight:700;color:var(--text-primary)">ตั้งค่า</div><div style="font-size:11px;color:var(--text-faint);margin-top:1px">จัดการเกณฑ์สต็อกและรายการหมึก</div></div>'+addBtn+'</div>';
   const canEdit=isAdmin();
   const grouped={};
   S.inventory.forEach(i=>{if(!grouped[i.model])grouped[i.model]=[];grouped[i.model].push(i);});
@@ -1080,7 +1092,7 @@ function renderSettings(){
   <div style="padding:18px;max-width:900px">
     ${Object.entries(grouped).map(([model,items])=>`
     <div style="margin-bottom:24px">
-      <div style="font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+      <div style="font-size:12px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;gap:8px">
         <span style="width:4px;height:14px;border-radius:99px;background:#4f46e5;display:inline-block"></span>${model}
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
@@ -1090,20 +1102,20 @@ function renderSettings(){
             <div style="display:flex;align-items:center;gap:10px;min-width:0">
               ${tonerDot(item.color,12)}
               <div>
-                <div style="font-size:14px;font-weight:700;color:#1e293b">${item.name}</div>
-                <div style="font-size:11px;color:#94a3b8;font-family:'JetBrains Mono',monospace;margin-top:1px">${item.part}</div>
+                <div style="font-size:14px;font-weight:700;color:var(--text-primary)">${item.name}</div>
+                <div style="font-size:11px;color:var(--text-faint);font-family:'JetBrains Mono',monospace;margin-top:1px">${item.part}</div>
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
               ${badge(st)}
-              ${canEdit?`<button onclick="openSettings('${item.id}')" style="display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:9px;background:#f1f5f9;border:1px solid #e2e8f0;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#ede9fe';this.style.color='#4f46e5';this.style.borderColor='#c4b5fd'" onmouseout="this.style.background='#f1f5f9';this.style.color='#64748b';this.style.borderColor='#e2e8f0'">${I.cog} ตั้งค่า</button>`:`<span style="font-size:12px;color:#94a3b8">ดูอย่างเดียว</span>`}
+              ${canEdit?`<button onclick="openSettings('${item.id}')" style="display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:9px;background:var(--surface3);border:1px solid var(--border);color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#ede9fe';this.style.color='#4f46e5';this.style.borderColor='#c4b5fd'" onmouseout="this.style.background='var(--surface3)';this.style.color='var(--text-muted)';this.style.borderColor='var(--border)'">${I.cog} ตั้งค่า</button>`:`<span style="font-size:12px;color:var(--text-faint)">ดูอย่างเดียว</span>`}
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(4,80px) 1fr 1fr;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid #f8fafc">
+          <div style="display:grid;grid-template-columns:repeat(4,80px) 1fr 1fr;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid var(--surface2)">
             ${[['วิกฤต',item.critical,'#dc2626'],['ขั้นต่ำ',item.min,'#d97706'],['สูงสุด',item.max,'#64748b'],['ปัจจุบัน',item.qty,SC[st].c]].map(([lb,v,c])=>`
-            <div><div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">${lb}</div><div style="font-size:20px;font-weight:800;color:${c}" class="mono">${v}</div></div>`).join('')}
-            ${item.loc?`<div style="display:flex;align-items:center;gap:4px;color:#94a3b8;font-size:12px;align-self:center">${I.map} ${item.loc}</div>`:'<div></div>'}
-            ${item.sup?`<div style="display:flex;align-items:center;gap:4px;color:#94a3b8;font-size:12px;overflow:hidden;align-self:center">${I.truck}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.sup}</span></div>`:'<div></div>'}
+            <div><div style="font-size:10px;color:var(--text-faint);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">${lb}</div><div style="font-size:20px;font-weight:800;color:${c}" class="mono">${v}</div></div>`).join('')}
+            ${item.loc?`<div style="display:flex;align-items:center;gap:4px;color:var(--text-faint);font-size:12px;align-self:center">${I.map} ${item.loc}</div>`:'<div></div>'}
+            ${item.sup?`<div style="display:flex;align-items:center;gap:4px;color:var(--text-faint);font-size:12px;overflow:hidden;align-self:center">${I.truck}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.sup}</span></div>`:'<div></div>'}
           </div>
         </div>`}).join('')}
       </div>
@@ -1114,7 +1126,7 @@ function renderSettings(){
 // ─── USERS (IAM) ──────────────────────────────────────────────
 function renderUsers(){
   if(!isAdmin()){nav('dashboard');return;}
-  document.getElementById('header-title').innerHTML='<div><div style="font-size:15px;font-weight:700;color:#1e293b">จัดการผู้ใช้ระบบ</div><div style="font-size:11px;color:#94a3b8;margin-top:1px">Identity & Access Management</div></div>';
+  document.getElementById('header-title').innerHTML='<div><div style="font-size:15px;font-weight:700;color:var(--text-primary)">จัดการผู้ใช้ระบบ</div><div style="font-size:11px;color:var(--text-faint);margin-top:1px">Identity & Access Management</div></div>';
   const tab=S.usersTab||'accounts';
   const isAccounts=tab==='accounts';
   let bodyHtml;
@@ -1127,20 +1139,20 @@ function renderUsers(){
       roles.forEach(function(r){opts+='<option value="'+r+'"'+(u.role===r?' selected':'')+'>'+r+'</option>';});
       const roleCell=isSelf
         ?'<td><span style="font-size:12px;padding:3px 10px;border-radius:6px;background:#ede9fe;color:#4f46e5;font-weight:700">'+esc(u.role)+'</span></td>'
-        :'<td><select onchange="updateUserRole(\''+u.id+'\',this.value)" style="font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;font-family:\'Sarabun\',sans-serif">'+opts+'</select></td>';
+        :'<td><select onchange="updateUserRole(\''+u.id+'\',this.value)" style="font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);font-family:\'Sarabun\',sans-serif">'+opts+'</select></td>';
       const delCell=isSelf
-        ?'<td><span style="font-size:11px;color:#94a3b8">บัญชีของคุณ</span></td>'
+        ?'<td><span style="font-size:11px;color:var(--text-faint)">บัญชีของคุณ</span></td>'
         :'<td><button onclick="deleteUser(\''+u.id+'\')" style="font-size:11px;padding:5px 10px;border-radius:6px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;cursor:pointer;font-family:\'Sarabun\',sans-serif">ลบ</button></td>';
       rows+='<tr>'
-        +'<td style="font-weight:600;color:#1e293b">'+esc(u.fullName)+(isSelf?' <span style="font-size:10px;padding:2px 6px;border-radius:99px;background:#ede9fe;color:#4f46e5;font-weight:700">คุณ</span>':'')+'</td>'
+        +'<td style="font-weight:600;color:var(--text-primary)">'+esc(u.fullName)+(isSelf?' <span style="font-size:10px;padding:2px 6px;border-radius:99px;background:#ede9fe;color:#4f46e5;font-weight:700">คุณ</span>':'')+'</td>'
         +'<td style="font-family:\'JetBrains Mono\',monospace;font-size:12px">'+esc(u.username)+'</td>'
-        +'<td style="color:#64748b;font-size:12px">'+esc(u.email||'—')+'</td>'
+        +'<td style="color:var(--text-muted);font-size:12px">'+esc(u.email||'—')+'</td>'
         +roleCell
-        +'<td style="color:#94a3b8;font-size:12px;white-space:nowrap">'+(u.createdAt?fmtDt(u.createdAt):'—')+'</td>'
-        +'<td style="color:#94a3b8;font-size:12px;white-space:nowrap">'+(u.lastLogin?fmtDt(u.lastLogin):'ยังไม่เคย')+'</td>'
+        +'<td style="color:var(--text-faint);font-size:12px;white-space:nowrap">'+(u.createdAt?fmtDt(u.createdAt):'—')+'</td>'
+        +'<td style="color:var(--text-faint);font-size:12px;white-space:nowrap">'+(u.lastLogin?fmtDt(u.lastLogin):'ยังไม่เคย')+'</td>'
         +delCell+'</tr>';
     });
-    if(!rows)rows='<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:30px">ไม่มีข้อมูลผู้ใช้</td></tr>';
+    if(!rows)rows='<tr><td colspan="7" style="text-align:center;color:var(--text-faint);padding:30px">ไม่มีข้อมูลผู้ใช้</td></tr>';
     bodyHtml='<div style="overflow-x:auto"><table><thead><tr><th>ชื่อ-นามสกุล</th><th>ชื่อผู้ใช้</th><th>อีเมล</th><th>สิทธิ์</th><th>สมัครเมื่อ</th><th>เข้าสู่ล่าสุด</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   } else {
     let rows='';
@@ -1148,18 +1160,18 @@ function renderUsers(){
       const roleColor=log.role==='ADMIN'?'#4f46e5':log.role==='STAFF'?'#0891b2':'#64748b';
       const roleBg=log.role==='ADMIN'?'#ede9fe':log.role==='STAFF'?'#cffafe':'#f1f5f9';
       rows+='<tr>'
-        +'<td class="mono" style="font-size:12px;color:#94a3b8;white-space:nowrap">'+fmtDt(log.timestamp)+'</td>'
-        +'<td style="font-weight:600;color:#1e293b">'+esc(log.fullName)+'</td>'
+        +'<td class="mono" style="font-size:12px;color:var(--text-faint);white-space:nowrap">'+fmtDt(log.timestamp)+'</td>'
+        +'<td style="font-weight:600;color:var(--text-primary)">'+esc(log.fullName)+'</td>'
         +'<td style="font-family:\'JetBrains Mono\',monospace;font-size:12px">'+esc(log.username)+'</td>'
         +'<td><span style="font-size:11px;padding:3px 10px;border-radius:6px;background:'+roleBg+';color:'+roleColor+';font-weight:700">'+esc(log.role)+'</span></td>'
         +'</tr>';
     });
-    if(!rows)rows='<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:30px">ยังไม่มีประวัติการเข้าสู่ระบบ</td></tr>';
+    if(!rows)rows='<tr><td colspan="4" style="text-align:center;color:var(--text-faint);padding:30px">ยังไม่มีประวัติการเข้าสู่ระบบ</td></tr>';
     bodyHtml='<div style="overflow-x:auto"><table><thead><tr><th>เวลา</th><th>ชื่อ-นามสกุล</th><th>ชื่อผู้ใช้</th><th>สิทธิ์</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   }
   document.getElementById('content').innerHTML='<div style="padding:18px;max-width:1000px">'
     +'<div class="card fade-up" style="overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)">'
-    +'<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid #f1f5f9;flex-wrap:wrap;gap:10px">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border2);flex-wrap:wrap;gap:10px">'
     +'<div style="display:flex;gap:6px">'
     +'<button class="tab'+(isAccounts?' t-all':'')+'" onclick="setUsersTab(\'accounts\')">บัญชีทั้งหมด <span style="font-size:11px;opacity:.65">('+S.users.length+')</span></button>'
     +'<button class="tab'+(!isAccounts?' t-all':'')+'" onclick="setUsersTab(\'audit\')">ประวัติการเข้าสู่ระบบ <span style="font-size:11px;opacity:.65">('+S.auditLogs.length+')</span></button>'
@@ -1178,39 +1190,39 @@ function renderModal(){
   <div class="modal-bg" onclick="if(event.target===this)closeSettings()">
     <div class="card fade-up" style="width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden">
       <div style="height:4px;background:${tc.hex}"></div>
-      <div style="display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid #f1f5f9">
-        <div style="width:36px;height:36px;border-radius:10px;background:#f8fafc;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid ${tc.hex}">
+      <div style="display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border2)">
+        <div style="width:36px;height:36px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid ${tc.hex}">
           ${tonerDot(item.color,14)}
         </div>
         <div style="flex:1">
-          <div style="font-size:15px;font-weight:700;color:#1e293b">${item.name}</div>
-          <div style="font-size:11px;color:#94a3b8;margin-top:1px">${item.model}</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text-primary)">${item.name}</div>
+          <div style="font-size:11px;color:var(--text-faint);margin-top:1px">${item.model}</div>
         </div>
         ${badge(st)}
         <button onclick="closeSettings()" class="icon-btn">${I.x}</button>
       </div>
       <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
         <div class="card-sm" style="padding:14px">
-          <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">เกณฑ์สต็อก</div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">เกณฑ์สต็อก</div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
             ${[['crit','วิกฤต',item.critical,'#dc2626'],['min','ขั้นต่ำ',item.min,'#d97706'],['max','สูงสุด',item.max,'#16a34a']].map(([id,lb,v,c])=>`
             <div>
-              <div style="font-size:12px;color:#64748b;font-weight:600;margin-bottom:6px">${lb}</div>
+              <div style="font-size:12px;color:var(--text-muted);font-weight:600;margin-bottom:6px">${lb}</div>
               <input id="sf-${id}" type="number" min="0" value="${v}" style="font-size:16px;font-weight:700;text-align:center;color:${c}"/>
             </div>`).join('')}
           </div>
-          <div style="font-size:11px;color:#94a3b8;margin-top:10px;text-align:center;background:#f8fafc;padding:6px;border-radius:8px">วิกฤต &lt; ขั้นต่ำ &lt; สูงสุด</div>
+          <div style="font-size:11px;color:var(--text-faint);margin-top:10px;text-align:center;background:var(--surface2);padding:6px;border-radius:8px">วิกฤต &lt; ขั้นต่ำ &lt; สูงสุด</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:10px">
           ${[['loc','📍 ตำแหน่งจัดเก็บ',item.loc||'','เช่น Rack A-1'],['sup','🚚 ซัพพลายเออร์',item.sup||'','เช่น Toshiba Thailand'],['rem','📝 หมายเหตุ',item.remarks||'','บันทึกเพิ่มเติม']].map(([id,lb,v,ph])=>`
           <div>
-            <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">${lb}</label>
+            <label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">${lb}</label>
             <input id="sf-${id}" type="text" value="${v}" placeholder="${ph}"/>
           </div>`).join('')}
         </div>
       </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid #f1f5f9;background:#f8fafc">
-        <button onclick="closeSettings()" style="padding:10px 20px;border-radius:10px;background:#fff;border:1px solid #e2e8f0;color:#64748b;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'">ยกเลิก</button>
+      <div style="display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border2);background:var(--surface2)">
+        <button onclick="closeSettings()" style="padding:10px 20px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-muted);font-size:14px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='var(--surface3)'" onmouseout="this.style.background='var(--surface)'">ยกเลิก</button>
         <button onclick="saveSettings()" style="padding:10px 22px;border-radius:10px;background:#4f46e5;border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;box-shadow:0 2px 8px rgba(79,70,229,.3)" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">บันทึก</button>
       </div>
     </div>
@@ -1223,13 +1235,13 @@ function renderNotifPanel(){
   document.getElementById('notif-root').innerHTML=`
   <div class="notif-overlay" onclick="toggleNotif()"></div>
   <div class="notif-panel">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid #f1f5f9">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border2)">
       <div>
-        <div style="font-size:15px;font-weight:700;color:#1e293b">การแจ้งเตือน</div>
-        ${uc?`<div style="font-size:12px;color:#94a3b8;margin-top:2px">${uc} ยังไม่ได้อ่าน</div>`:''}
+        <div style="font-size:15px;font-weight:700;color:var(--text-primary)">การแจ้งเตือน</div>
+        ${uc?`<div style="font-size:12px;color:var(--text-faint);margin-top:2px">${uc} ยังไม่ได้อ่าน</div>`:''}
       </div>
       <div style="display:flex;gap:6px;align-items:center">
-        ${uc?`<button onclick="markAllRead()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;background:#f1f5f9;border:1px solid #e2e8f0;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#ede9fe';this.style.color='#4f46e5'" onmouseout="this.style.background='#f1f5f9';this.style.color='#64748b'">${I.check} อ่านทั้งหมด</button>`:''}
+        ${uc?`<button onclick="markAllRead()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;background:var(--surface3);border:1px solid var(--border);color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#ede9fe';this.style.color='#4f46e5'" onmouseout="this.style.background='var(--surface3)';this.style.color='var(--text-muted)'">${I.check} อ่านทั้งหมด</button>`:''}
         <button class="icon-btn" onclick="toggleNotif()">${I.x}</button>
       </div>
     </div>
@@ -1238,15 +1250,15 @@ function renderNotifPanel(){
 }
 function renderNotifList(){
   const notifs=[...S.notifications].sort((a,b)=>({CRITICAL:0,WARNING:1,INFO:2}[a.type]-{CRITICAL:0,WARNING:1,INFO:2}[b.type]));
-  if(!notifs.length)return`<div style="text-align:center;padding:60px 20px;color:#94a3b8;font-size:14px">ไม่มีการแจ้งเตือน</div>`;
+  if(!notifs.length)return`<div style="text-align:center;padding:60px 20px;color:var(--text-faint);font-size:14px">ไม่มีการแจ้งเตือน</div>`;
   return notifs.map(n=>{const nc=NIC[n.type];return`
-  <div style="display:flex;gap:10px;padding:11px 12px;border-radius:10px;margin-bottom:5px;background:${n.read?'transparent':nc.bg};border:1px solid ${n.read?'transparent':nc.border};opacity:${n.read ? .55 : 1};transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='${n.read?'transparent':nc.bg}'">
+  <div style="display:flex;gap:10px;padding:11px 12px;border-radius:10px;margin-bottom:5px;background:${n.read?'transparent':nc.bg};border:1px solid ${n.read?'transparent':nc.border};opacity:${n.read ? .55 : 1};transition:background .15s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='${n.read?'transparent':nc.bg}'">
     <span style="color:${nc.c};flex-shrink:0;margin-top:2px">${I[nc.icon]}</span>
     <div style="min-width:0">
       ${!n.read?`<span style="width:7px;height:7px;border-radius:50%;background:${nc.c};display:inline-block;margin-right:4px;vertical-align:middle"></span>`:''}
-      <span style="font-size:13px;font-weight:600;color:#1e293b">${n.title}</span>
-      <div style="font-size:12px;color:#64748b;margin-top:3px;line-height:1.5">${n.msg}</div>
-      <div style="font-size:11px;color:#94a3b8;margin-top:5px">${ago(n.date)}</div>
+      <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${n.title}</span>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:3px;line-height:1.5">${n.msg}</div>
+      <div style="font-size:11px;color:var(--text-faint);margin-top:5px">${ago(n.date)}</div>
     </div>
   </div>`}).join('');
 }
