@@ -139,8 +139,8 @@ function defNotifs(){return[
 // notifications: id,type,title,msg,is_read,date
 // users     : id,username,password,full_name,email,role,created_at,last_login
 // audit_logs: id,username,full_name,role,timestamp
-function mapInvFromDB(r){return{id:r.id,name:r.name,model:r.model,mk:r.mk,color:r.color,type:r.type,part:r.part,qty:r.qty,min:r.min_stock,critical:r.critical_stock,max:r.max_stock,loc:r.loc||'',sup:r.sup||'',remarks:r.remarks||'',updatedAt:r.updated_at};}
-function mapInvToDB(i){return{id:i.id,name:i.name,model:i.model,mk:i.mk,color:i.color,type:i.type,part:i.part,qty:i.qty,min_stock:i.min,critical_stock:i.critical,max_stock:i.max,loc:i.loc||null,sup:i.sup||null,remarks:i.remarks||null,updated_at:i.updatedAt||new Date().toISOString()};}
+function mapInvFromDB(r){return{id:r.id,name:r.name,model:r.model,mk:r.mk,color:r.color,type:r.type,part:r.part,qty:r.qty,min:r.min_stock,critical:r.critical_stock??r.critical??1,max:r.max_stock,loc:r.loc||'',sup:r.sup||'',remarks:r.remarks||'',updatedAt:r.updated_at};}
+function mapInvToDB(i){const o={id:i.id,name:i.name,model:i.model,mk:i.mk,color:i.color,type:i.type,part:i.part,qty:i.qty,min_stock:i.min,max_stock:i.max,loc:i.loc||null,sup:i.sup||null,remarks:i.remarks||null,updated_at:i.updatedAt||new Date().toISOString()};if(typeof i.critical==='number')o.critical_stock=i.critical;return o;}
 function mapHistFromDB(r){return{id:r.id,iid:r.iid,name:r.name,mk:r.mk,color:r.color,oq:r.oq,nq:r.nq,ct:r.ct,reason:r.reason,user:r.changed_by,date:r.date};}
 function mapHistToDB(h){return{id:h.id,iid:h.iid,name:h.name,mk:h.mk,color:h.color,oq:h.oq,nq:h.nq,ct:h.ct,reason:h.reason||null,changed_by:h.user,date:h.date};}
 function mapNotifFromDB(r){return{id:r.id,type:r.type,title:r.title,msg:r.msg,read:r.is_read,date:r.date};}
@@ -252,6 +252,13 @@ const CTC={INCREASE:{label:'เพิ่ม',c:'#16a34a',bg:'#dcfce7'},DECREASE:
 function ago(d){const s=Math.floor((Date.now()-new Date(d))/1000);if(s<60)return'เมื่อกี้';if(s<3600)return Math.floor(s/60)+' นาทีที่แล้ว';if(s<86400)return Math.floor(s/3600)+' ชม.ที่แล้ว';return Math.floor(s/86400)+' วันที่แล้ว';}
 function fmtDt(d){const dt=new Date(d);return dt.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'2-digit'})+' '+dt.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});}
 function uid(){return'x'+Math.random().toString(36).slice(2,9);}
+function togglePassVis(inputId,btnId,stateKey){
+  S[stateKey]=!S[stateKey];
+  const inp=document.getElementById(inputId);
+  const btn=document.getElementById(btnId);
+  if(inp)inp.type=S[stateKey]?'text':'password';
+  if(btn)btn.innerHTML=S[stateKey]?I.eyeoff:I.eye;
+}
 function unread(){return S.notifications.filter(n=>!n.read).length;}
 function isAdmin(){return S.user?.role==='ADMIN';}
 function canEditInventory(){return S.user?.role==='STAFF'||S.user?.role==='ADMIN';}
@@ -475,35 +482,18 @@ function deleteUser(userId){
 function setUsersTab(tab){S.usersTab=tab;renderUsers();}
 
 // ─── ADD ITEM ─────────────────────────────────────────────────
-function selectPrinterChip(model,mk){
-  document.querySelectorAll('.ai-printer-chip').forEach(function(c){
-    c.style.background='#f8fafc';c.style.borderColor='#e2e8f0';c.style.color='#475569';c.style.fontWeight='500';
-  });
-  const chip=document.querySelector('.ai-printer-chip[data-model="'+model+'"]');
-  if(chip){chip.style.background='#ede9fe';chip.style.borderColor='#4f46e5';chip.style.color='#4f46e5';chip.style.fontWeight='700';}
-  const wrap=document.getElementById('ai-custom-wrap');
+function onModelInput(val){
+  const known=S.inventory.find(function(i){return i.model===val;});
   const mkInput=document.getElementById('ai-mk');
-  const hidden=document.getElementById('ai-model-val');
-  if(model==='__new__'){
-    if(wrap)wrap.style.display='flex';
-    if(mkInput){mkInput.value='';mkInput.readOnly=false;mkInput.style.opacity='1';}
-    if(hidden)hidden.value='__new__';
-  } else {
-    if(wrap)wrap.style.display='none';
-    if(mkInput){mkInput.value=mk||'';mkInput.readOnly=true;mkInput.style.opacity='.6';}
-    if(hidden)hidden.value=model;
-  }
+  if(known&&mkInput){mkInput.value=known.mk;mkInput.readOnly=true;mkInput.style.opacity='.6';}
+  else if(mkInput){if(mkInput.readOnly){mkInput.value='';mkInput.readOnly=false;mkInput.style.opacity='1';}}
 }
 function openAddItem(){
   if(!isAdmin())return;
   const uniqueModels=[];const seen=new Set();
   S.inventory.forEach(function(i){if(!seen.has(i.model)){seen.add(i.model);uniqueModels.push({model:i.model,mk:i.mk});}});
-  let chips='';
-  uniqueModels.forEach(function(m){
-    chips+='<button type="button" class="ai-printer-chip" data-model="'+esc(m.model)+'" data-mk="'+esc(m.mk)+'" onclick="selectPrinterChip(this.dataset.model,this.dataset.mk)" style="padding:8px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:13px;font-weight:500;cursor:pointer;font-family:\'Sarabun\',sans-serif;white-space:nowrap;transition:all .15s">'+esc(m.model)+'</button>';
-  });
-  chips+='<button type="button" class="ai-printer-chip" data-model="__new__" data-mk="" onclick="selectPrinterChip(\'__new__\',\'\')" style="padding:8px 14px;border-radius:20px;border:1.5px dashed #cbd5e1;background:#fff;color:#94a3b8;font-size:13px;font-weight:500;cursor:pointer;font-family:\'Sarabun\',sans-serif;white-space:nowrap">+ เพิ่มรุ่นใหม่…</button>';
-  const noModelsMsg=uniqueModels.length===0?'<div style="font-size:12px;color:#94a3b8;margin-top:4px">ยังไม่มีข้อมูลเครื่องพิมพ์ในระบบ กรุณาเพิ่มรุ่นใหม่</div>':'';
+  let dlOpts='';
+  uniqueModels.forEach(function(m){dlOpts+='<option value="'+esc(m.model)+'">';});
   document.getElementById('modal-root').innerHTML=`
   <div class="modal-bg" onclick="if(event.target===this)closeModal()">
     <div class="card fade-up" style="width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden;max-height:92vh;display:flex;flex-direction:column">
@@ -517,16 +507,10 @@ function openAddItem(){
           <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">ชื่อหมึก <span style="color:#ef4444">*</span></label>
           <input id="ai-name" type="text" placeholder="เช่น หมึกดำ, หมึกฟ้า, ถังหมึกเสีย"/>
         </div>
-        <input type="hidden" id="ai-model-val" value=""/>
+        <datalist id="ai-models-dl">`+dlOpts+`</datalist>
         <div style="grid-column:1/-1">
-          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:8px">เครื่องพิมพ์ <span style="color:#ef4444">*</span></label>
-          <div style="display:flex;flex-wrap:wrap;gap:8px">`+chips+`</div>`+noModelsMsg+`
-        </div>
-        <div id="ai-custom-wrap" style="grid-column:1/-1;display:none;flex-direction:column;gap:10px;padding:12px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">
-          <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#64748b;margin-bottom:5px">ชื่อรุ่นเต็ม <span style="color:#ef4444">*</span></label>
-            <input id="ai-model-custom" type="text" placeholder="เช่น Toshiba e-STUDIO 4518A (สำนักงาน)"/>
-          </div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">เครื่องพิมพ์ <span style="color:#ef4444">*</span></label>
+          <input id="ai-model" type="text" list="ai-models-dl" placeholder="พิมพ์หรือเลือกจากรายการ…" oninput="onModelInput(this.value)" autocomplete="off"/>
         </div>
         <div>
           <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">รุ่นสั้น <span style="color:#ef4444">*</span></label>
@@ -585,22 +569,17 @@ function openAddItem(){
       </div>
     </div>
   </div>`;
-  setTimeout(function(){
-    document.getElementById('ai-name')?.focus();
-    if(uniqueModels.length===0)selectPrinterChip('__new__','');
-  },50);
+  setTimeout(function(){document.getElementById('ai-name')?.focus();},50);
 }
 async function confirmAddItem(){
   if(!isAdmin())return;
   const g=function(id){return document.getElementById(id)?.value?.trim()||'';};
   const name=g('ai-name');
-  const modelVal=g('ai-model-val');
-  const isNew=modelVal==='__new__';
-  const model=isNew?g('ai-model-custom'):modelVal;
-  const mk=isNew?g('ai-mk'):g('ai-mk');
+  const model=g('ai-model');
+  const mk=g('ai-mk');
   const showErr=function(msg){const el=document.getElementById('ai-err');if(el){el.textContent=msg;el.style.display='block';el.scrollIntoView({behavior:'smooth',block:'nearest'});}};
   if(!name){showErr('กรุณาระบุชื่อหมึก');return;}
-  if(!model){showErr('กรุณาเลือกเครื่องพิมพ์ หรือกด "+ เพิ่มรุ่นใหม่…" แล้วพิมพ์ชื่อรุ่น');return;}
+  if(!model){showErr('กรุณาระบุชื่อเครื่องพิมพ์ (พิมพ์หรือเลือกจากรายการ)');return;}
   if(!mk){showErr('กรุณาระบุรุ่นสั้น (เช่น 330AC, 4518A)');return;}
   const qty=parseInt(g('ai-qty'))||0,mn=parseInt(g('ai-min'))||3,crit=parseInt(g('ai-crit'))||1,mx=parseInt(g('ai-max'))||10;
   if(crit>=mn){showErr('วิกฤต ('+crit+') ต้องน้อยกว่าขั้นต่ำ ('+mn+')');return;}
@@ -627,8 +606,10 @@ function renderLogin(){
   const errHtml=isReg&&S.regErr?'<div style="font-size:13px;color:#dc2626;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;font-weight:500">'+S.regErr+'</div>':'';
   const okHtml=!isReg&&S.regOk?'<div style="font-size:13px;color:#16a34a;background:#dcfce7;border:1px solid #86efac;border-radius:10px;padding:10px 14px;font-weight:500">'+S.regOk+'</div>':'';
   const loginErrHtml=!isReg&&S.loginErr?'<div style="font-size:13px;color:#dc2626;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;font-weight:500">'+S.loginErr+'</div>':'';
-  const eyeBtn='<button onclick="S.showPass=!S.showPass;renderLogin()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;display:flex;padding:0">'+(S.showPass?I.eyeoff:I.eye)+'</button>';
-  const eyeBtn2='<button onclick="S.showPass2=!S.showPass2;renderLogin()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;display:flex;padding:0">'+(S.showPass2?I.eyeoff:I.eye)+'</button>';
+  const eyeStyle='position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;display:flex;padding:0';
+  const eyeBtn='<button id="eye-lp" onclick="togglePassVis(\'lp\',\'eye-lp\',\'showPass\')" style="'+eyeStyle+'">'+(S.showPass?I.eyeoff:I.eye)+'</button>';
+  const eyeBtn2='<button id="eye-rp" onclick="togglePassVis(\'rp\',\'eye-rp\',\'showPass\')" style="'+eyeStyle+'">'+(S.showPass?I.eyeoff:I.eye)+'</button>';
+  const eyeBtn3='<button id="eye-rp2" onclick="togglePassVis(\'rp2\',\'eye-rp2\',\'showPass2\')" style="'+eyeStyle+'">'+(S.showPass2?I.eyeoff:I.eye)+'</button>';
 
   let formHtml;
   if(isReg){
@@ -640,9 +621,9 @@ function renderLogin(){
       +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px">อีเมล <span style="color:#ef4444">*</span></label>'
       +'<input id="re" type="email" value="'+esc(d.em)+'" placeholder="example@company.com" oninput="S.regDraft.em=this.value" onkeydown="if(event.key===\'Enter\')document.getElementById(\'rp\').focus()"/></div>'
       +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px">รหัสผ่าน <span style="color:#ef4444">*</span></label>'
-      +'<div style="position:relative"><input id="rp" type="'+(S.showPass?'text':'password')+'" value="'+esc(d.p)+'" placeholder="อย่างน้อย 6 ตัวอักษร" style="padding-right:40px" oninput="S.regDraft.p=this.value" onkeydown="if(event.key===\'Enter\')document.getElementById(\'rp2\').focus()"/>'+eyeBtn+'</div></div>'
+      +'<div style="position:relative"><input id="rp" type="'+(S.showPass?'text':'password')+'" value="'+esc(d.p)+'" placeholder="อย่างน้อย 6 ตัวอักษร" style="padding-right:40px" oninput="S.regDraft.p=this.value" onkeydown="if(event.key===\'Enter\')document.getElementById(\'rp2\').focus()"/>'+eyeBtn2+'</div></div>'
       +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px">ยืนยันรหัสผ่าน <span style="color:#ef4444">*</span></label>'
-      +'<div style="position:relative"><input id="rp2" type="'+(S.showPass2?'text':'password')+'" value="'+esc(d.p2)+'" placeholder="กรอกรหัสผ่านอีกครั้ง" style="padding-right:40px" oninput="S.regDraft.p2=this.value" onkeydown="if(event.key===\'Enter\')doRegister()"/>'+eyeBtn2+'</div></div>'
+      +'<div style="position:relative"><input id="rp2" type="'+(S.showPass2?'text':'password')+'" value="'+esc(d.p2)+'" placeholder="กรอกรหัสผ่านอีกครั้ง" style="padding-right:40px" oninput="S.regDraft.p2=this.value" onkeydown="if(event.key===\'Enter\')doRegister()"/>'+eyeBtn3+'</div></div>'
       +errHtml
       +'<button onclick="doRegister()" style="width:100%;padding:12px;border-radius:12px;background:#4f46e5;color:#fff;font-size:15px;font-weight:700;cursor:pointer;border:none;margin-top:2px;box-shadow:0 4px 12px rgba(79,70,229,.3);font-family:\'Sarabun\',sans-serif" onmouseover="this.style.background=\'#4338ca\'" onmouseout="this.style.background=\'#4f46e5\'">สมัครสมาชิก</button>'
       +'<div style="font-size:12px;color:#94a3b8;background:#f8fafc;border-radius:8px;padding:8px 12px">บัญชีใหม่จะเป็นผู้ชมก่อน หากต้องการแก้สต็อกให้ Admin ปรับสิทธิ์ให้</div>'
