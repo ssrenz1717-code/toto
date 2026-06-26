@@ -503,6 +503,7 @@ function openAddItem(){
     chips+='<button type="button" class="ai-printer-chip" data-model="'+esc(m.model)+'" data-mk="'+esc(m.mk)+'" onclick="selectPrinterChip(this.dataset.model,this.dataset.mk)" style="padding:8px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:13px;font-weight:500;cursor:pointer;font-family:\'Sarabun\',sans-serif;white-space:nowrap;transition:all .15s">'+esc(m.model)+'</button>';
   });
   chips+='<button type="button" class="ai-printer-chip" data-model="__new__" data-mk="" onclick="selectPrinterChip(\'__new__\',\'\')" style="padding:8px 14px;border-radius:20px;border:1.5px dashed #cbd5e1;background:#fff;color:#94a3b8;font-size:13px;font-weight:500;cursor:pointer;font-family:\'Sarabun\',sans-serif;white-space:nowrap">+ เพิ่มรุ่นใหม่…</button>';
+  const noModelsMsg=uniqueModels.length===0?'<div style="font-size:12px;color:#94a3b8;margin-top:4px">ยังไม่มีข้อมูลเครื่องพิมพ์ในระบบ กรุณาเพิ่มรุ่นใหม่</div>':'';
   document.getElementById('modal-root').innerHTML=`
   <div class="modal-bg" onclick="if(event.target===this)closeModal()">
     <div class="card fade-up" style="width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden;max-height:92vh;display:flex;flex-direction:column">
@@ -519,7 +520,7 @@ function openAddItem(){
         <input type="hidden" id="ai-model-val" value=""/>
         <div style="grid-column:1/-1">
           <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:8px">เครื่องพิมพ์ <span style="color:#ef4444">*</span></label>
-          <div style="display:flex;flex-wrap:wrap;gap:8px">`+chips+`</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">`+chips+`</div>`+noModelsMsg+`
         </div>
         <div id="ai-custom-wrap" style="grid-column:1/-1;display:none;flex-direction:column;gap:10px;padding:12px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">
           <div>
@@ -584,29 +585,39 @@ function openAddItem(){
       </div>
     </div>
   </div>`;
-  setTimeout(function(){document.getElementById('ai-name')?.focus();},50);
+  setTimeout(function(){
+    document.getElementById('ai-name')?.focus();
+    if(uniqueModels.length===0)selectPrinterChip('__new__','');
+  },50);
 }
-function confirmAddItem(){
+async function confirmAddItem(){
   if(!isAdmin())return;
   const g=function(id){return document.getElementById(id)?.value?.trim()||'';};
   const name=g('ai-name');
   const modelVal=g('ai-model-val');
   const isNew=modelVal==='__new__';
   const model=isNew?g('ai-model-custom'):modelVal;
-  const mk=g('ai-mk');
-  const showErr=function(msg){const el=document.getElementById('ai-err');if(el){el.textContent=msg;el.style.display='block';}};
+  const mk=isNew?g('ai-mk'):g('ai-mk');
+  const showErr=function(msg){const el=document.getElementById('ai-err');if(el){el.textContent=msg;el.style.display='block';el.scrollIntoView({behavior:'smooth',block:'nearest'});}};
   if(!name){showErr('กรุณาระบุชื่อหมึก');return;}
-  if(!model){showErr('กรุณาเลือกหรือพิมพ์ชื่อเครื่องพิมพ์');return;}
-  if(!mk){showErr('กรุณาระบุรุ่นสั้น');return;}
+  if(!model){showErr('กรุณาเลือกเครื่องพิมพ์ หรือกด "+ เพิ่มรุ่นใหม่…" แล้วพิมพ์ชื่อรุ่น');return;}
+  if(!mk){showErr('กรุณาระบุรุ่นสั้น (เช่น 330AC, 4518A)');return;}
   const qty=parseInt(g('ai-qty'))||0,mn=parseInt(g('ai-min'))||3,crit=parseInt(g('ai-crit'))||1,mx=parseInt(g('ai-max'))||10;
-  if(crit>=mn||mn>=mx){showErr('วิกฤต < ขั้นต่ำ < สูงสุด (ต้องเรียงน้อยไปมาก)');return;}
-  const nu={id:'i'+Date.now(),name,model,mk,color:g('ai-color')||'BLACK',type:g('ai-type')||'TONER',part:g('ai-part'),qty,min:mn,critical:crit,max:mx,loc:g('ai-loc'),sup:g('ai-sup'),remarks:'',updatedAt:new Date().toISOString()};
+  if(crit>=mn){showErr('วิกฤต ('+crit+') ต้องน้อยกว่าขั้นต่ำ ('+mn+')');return;}
+  if(mn>=mx){showErr('ขั้นต่ำ ('+mn+') ต้องน้อยกว่าสูงสุด ('+mx+')');return;}
+  const saveBtn=document.querySelector('[onclick="confirmAddItem()"]');
+  if(saveBtn){saveBtn.textContent='กำลังบันทึก…';saveBtn.disabled=true;}
+  const nu={id:uid(),name,model,mk,color:g('ai-color')||'BLACK',type:g('ai-type')||'TONER',part:g('ai-part'),qty,min:mn,critical:crit,max:mx,loc:g('ai-loc'),sup:g('ai-sup'),remarks:'',updatedAt:new Date().toISOString()};
+  const{error}=await sb.from('inventory').insert(mapInvToDB(nu));
+  if(error){
+    showErr('บันทึกไม่สำเร็จ: '+error.message);
+    if(saveBtn){saveBtn.textContent='+ เพิ่มรายการ';saveBtn.disabled=false;}
+    return;
+  }
   S.inventory.push(nu);
-  sb.from('inventory').insert(mapInvToDB(nu)).then(function(r){
-    if(r.error){S.inventory=S.inventory.filter(x=>x.id!==nu.id);showToast('เพิ่มหมึกไม่สำเร็จ: '+r.error.message);}
-    else showToast('เพิ่ม "'+nu.name+'" ('+nu.mk+') เรียบร้อยแล้ว','ok');
-  });
-  closeModal();renderContent();
+  closeModal();
+  renderContent();
+  showToast('เพิ่ม "'+nu.name+'" ('+nu.mk+') เรียบร้อยแล้ว','ok');
 }
 
 // ─── LOGIN / REGISTER ─────────────────────────────────────────
