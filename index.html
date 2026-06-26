@@ -125,15 +125,25 @@ function defNotifs(){return[
 ];}
 
 // ─── STATE ────────────────────────────────────────────────────
+const STORAGE_KEYS=['toner-v4','toner-v3'];
 let S={page:'login',mode:'login',user:null,sidebarOpen:true,notifOpen:false,filter:'ALL',search:'',settingsItem:null,showPass:false,showPass2:false,loginErr:'',regErr:'',regOk:'',regDraft:{u:'',fn:'',em:'',p:'',p2:''},inventory:[],history:[],notifications:[],histPage:1,customUsers:[]};
 
 function load(){
-  const raw=localStorage.getItem('toner-v3');
-  if(raw){try{const p=JSON.parse(raw);S.inventory=p.inv||DEF_INV.map(x=>({...x}));S.history=p.hist||[...DEF_HIST];S.notifications=p.notifs||defNotifs();S.customUsers=p.cu||[];if(p.user){S.user=p.user;S.page='dashboard';}}catch(e){reset();}}
+  const raw=readStored();
+  if(raw){try{const p=JSON.parse(raw);S.inventory=p.inv||DEF_INV.map(x=>({...x}));S.history=p.hist||[...DEF_HIST];S.notifications=p.notifs||defNotifs();S.customUsers=p.cu||[];if(p.user){S.user=p.user;S.page='dashboard';}save();}catch(e){reset();}}
   else reset();
 }
 function reset(){S.inventory=DEF_INV.map(x=>({...x}));S.history=[...DEF_HIST];S.notifications=defNotifs();S.customUsers=[];}
-function save(){localStorage.setItem('toner-v3',JSON.stringify({inv:S.inventory,hist:S.history,notifs:S.notifications,user:S.user,cu:S.customUsers}));}
+function readStored(){
+  for(const k of STORAGE_KEYS){
+    try{const v=localStorage.getItem(k)||sessionStorage.getItem(k);if(v)return v;}catch(e){}
+  }
+  return null;
+}
+function save(){
+  const data=JSON.stringify({inv:S.inventory,hist:S.history,notifs:S.notifications,user:S.user,cu:S.customUsers,savedAt:new Date().toISOString()});
+  STORAGE_KEYS.forEach(k=>{try{localStorage.setItem(k,data);sessionStorage.setItem(k,data);}catch(e){}});
+}
 
 // ─── UTILS ────────────────────────────────────────────────────
 function status(item){
@@ -321,6 +331,20 @@ function saveSettings(){
 }
 function markAllRead(){S.notifications.forEach(n=>n.read=true);save();renderNotifPanel();}
 function toggleNotif(){S.notifOpen=!S.notifOpen;if(S.notifOpen)renderNotifPanel();else document.getElementById('notif-root').innerHTML='';}
+function updateUserRole(idx,role){
+  if(!isAdmin()||!S.customUsers[idx])return;
+  S.customUsers[idx].role=role;
+  save();
+  renderSettings();
+}
+function deleteCustomUser(idx){
+  if(!isAdmin()||!S.customUsers[idx])return;
+  if(confirm('ลบผู้ใช้ '+S.customUsers[idx].fullName+'?')){
+    S.customUsers.splice(idx,1);
+    save();
+    renderSettings();
+  }
+}
 
 // ─── LOGIN / REGISTER ─────────────────────────────────────────
 function renderLogin(){
@@ -716,6 +740,7 @@ function renderHistory(){
 // ─── SETTINGS ─────────────────────────────────────────────────
 function renderSettings(){
   document.getElementById('header-title').innerHTML=`<div style="font-size:15px;font-weight:700;color:#1e293b">ตั้งค่า</div>`;
+  const canEdit=isAdmin();
   const grouped={};
   S.inventory.forEach(i=>{if(!grouped[i.model])grouped[i.model]=[];grouped[i.model].push(i);});
   document.getElementById('content').innerHTML=`
@@ -738,7 +763,7 @@ function renderSettings(){
             </div>
             <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
               ${badge(st)}
-              <button onclick="openSettings('${item.id}')" style="display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:9px;background:#f1f5f9;border:1px solid #e2e8f0;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#ede9fe';this.style.color='#4f46e5';this.style.borderColor='#c4b5fd'" onmouseout="this.style.background='#f1f5f9';this.style.color='#64748b';this.style.borderColor='#e2e8f0'">${I.cog} ตั้งค่า</button>
+              ${canEdit?`<button onclick="openSettings('${item.id}')" style="display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:9px;background:#f1f5f9;border:1px solid #e2e8f0;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#ede9fe';this.style.color='#4f46e5';this.style.borderColor='#c4b5fd'" onmouseout="this.style.background='#f1f5f9';this.style.color='#64748b';this.style.borderColor='#e2e8f0'">${I.cog} ตั้งค่า</button>`:`<span style="font-size:12px;color:#94a3b8">ดูอย่างเดียว</span>`}
             </div>
           </div>
           <div style="display:grid;grid-template-columns:repeat(4,80px) 1fr 1fr;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid #f8fafc">
@@ -752,7 +777,7 @@ function renderSettings(){
     </div>`).join('')}
   </div>`;
   // Admin: user management section
-  if(S.user?.role==='ADMIN'&&S.customUsers.length){
+  if(S.user?.role==='ADMIN'){
     const el=document.getElementById('content');
     let rows='';
     S.customUsers.forEach(function(u,idx){
@@ -760,17 +785,21 @@ function renderSettings(){
       let opts='';
       roles.forEach(function(r){opts+='<option value="'+r+'"'+(u.role===r?' selected':'')+'>'+r+'</option>';});
       rows+='<tr>'
-        +'<td style="font-weight:600;color:#1e293b">'+u.fullName+'</td>'
-        +'<td style="font-family:\'JetBrains Mono\',monospace;font-size:12px">'+u.username+'</td>'
-        +'<td style="color:#64748b;font-size:12px">'+u.email+'</td>'
-        +'<td><select onchange="S.customUsers['+idx+'].role=this.value;save()" style="font-size:12px;padding:3px 6px;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;font-family:\'Sarabun\',sans-serif">'+opts+'</select></td>'
-        +'<td><button onclick="if(confirm(\'ลบผู้ใช้ '+u.fullName+'?\')){S.customUsers.splice('+idx+',1);save();renderSettings();}" style="font-size:11px;padding:3px 10px;border-radius:6px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;cursor:pointer;font-family:\'Sarabun\',sans-serif">ลบ</button></td>'
+        +'<td style="font-weight:600;color:#1e293b">'+esc(u.fullName)+'</td>'
+        +'<td style="font-family:\'JetBrains Mono\',monospace;font-size:12px">'+esc(u.username)+'</td>'
+        +'<td style="color:#64748b;font-size:12px">'+esc(u.email)+'</td>'
+        +'<td style="color:#64748b;font-size:12px;white-space:nowrap">'+(u.createdAt?fmtDt(u.createdAt):'-')+'</td>'
+        +'<td><select onchange="updateUserRole('+idx+',this.value)" style="font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;font-family:\'Sarabun\',sans-serif">'+opts+'</select></td>'
+        +'<td><button onclick="deleteCustomUser('+idx+')" style="font-size:11px;padding:5px 10px;border-radius:6px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;cursor:pointer;font-family:\'Sarabun\',sans-serif">ลบ</button></td>'
         +'</tr>';
     });
+    if(!rows){
+      rows='<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:22px">ยังไม่มีผู้ใช้สมัครใหม่</td></tr>';
+    }
     el.innerHTML+='<div style="padding:0 18px 18px;max-width:900px">'
       +'<div class="card fade-up" style="padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04)">'
-      +'<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:14px">จัดการผู้ใช้ที่สมัครใหม่ ('+S.customUsers.length+' บัญชี)</div>'
-      +'<div style="overflow-x:auto"><table><thead><tr><th>ชื่อ-นามสกุล</th><th>ชื่อผู้ใช้</th><th>อีเมล</th><th>สิทธิ์</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px"><div><div style="font-size:15px;font-weight:700;color:#1e293b">ผู้ใช้ที่สมัครใหม่</div><div style="font-size:12px;color:#94a3b8;margin-top:2px">ตรวจสอบบัญชีและมอบสิทธิ์ให้ใช้งานระบบ</div></div><span style="font-size:12px;font-weight:700;color:#4f46e5;background:#ede9fe;border:1px solid #c4b5fd;border-radius:999px;padding:5px 10px">'+S.customUsers.length+' บัญชี</span></div>'
+      +'<div style="overflow-x:auto"><table><thead><tr><th>ชื่อ-นามสกุล</th><th>ชื่อผู้ใช้</th><th>อีเมล</th><th>สมัครเมื่อ</th><th>สิทธิ์</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'
       +'</div></div>';
   }
 }
@@ -846,7 +875,7 @@ function renderNotifList(){
   const notifs=[...S.notifications].sort((a,b)=>({CRITICAL:0,WARNING:1,INFO:2}[a.type]-{CRITICAL:0,WARNING:1,INFO:2}[b.type]));
   if(!notifs.length)return`<div style="text-align:center;padding:60px 20px;color:#94a3b8;font-size:14px">ไม่มีการแจ้งเตือน</div>`;
   return notifs.map(n=>{const nc=NIC[n.type];return`
-  <div style="display:flex;gap:10px;padding:11px 12px;border-radius:10px;margin-bottom:5px;background:${n.read?'transparent':nc.bg};border:1px solid ${n.read?'transparent':nc.border};opacity:${n.read?.55:1};transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='${n.read?'transparent':nc.bg}'">
+  <div style="display:flex;gap:10px;padding:11px 12px;border-radius:10px;margin-bottom:5px;background:${n.read?'transparent':nc.bg};border:1px solid ${n.read?'transparent':nc.border};opacity:${n.read ? .55 : 1};transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='${n.read?'transparent':nc.bg}'">
     <span style="color:${nc.c};flex-shrink:0;margin-top:2px">${I[nc.icon]}</span>
     <div style="min-width:0">
       ${!n.read?`<span style="width:7px;height:7px;border-radius:50%;background:${nc.c};display:inline-block;margin-right:4px;vertical-align:middle"></span>`:''}
@@ -869,6 +898,7 @@ function renderContent(){
   else if(S.page==='settings')renderSettings();
 }
 function render(){if(!S.user){renderLogin();return;}renderShell();renderContent();}
+window.addEventListener('beforeunload',save);
 try{load();render();}catch(e){document.getElementById('app').innerHTML='<div style="padding:30px;font-family:monospace;color:#dc2626;background:#fee2e2;margin:20px;border-radius:12px"><b>Error:</b> '+e.message+'<br><small>'+e.stack+'</small></div>';}
 </script>
 </body>
