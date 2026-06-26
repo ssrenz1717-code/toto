@@ -474,6 +474,131 @@ function deleteUser(userId){
 }
 function setUsersTab(tab){S.usersTab=tab;renderUsers();}
 
+// ─── ADD ITEM ─────────────────────────────────────────────────
+function onModelSelect(sel){
+  const wrap=document.getElementById('ai-custom-wrap');
+  const mkInput=document.getElementById('ai-mk');
+  const isNew=sel.value==='__new__';
+  if(wrap)wrap.style.display=isNew?'flex':'none';
+  if(!isNew&&mkInput){
+    const opt=sel.options[sel.selectedIndex];
+    mkInput.value=opt.getAttribute('data-mk')||'';
+    mkInput.readOnly=true;mkInput.style.opacity='.6';
+  }
+  if(isNew&&mkInput){mkInput.value='';mkInput.readOnly=false;mkInput.style.opacity='1';}
+}
+function openAddItem(){
+  if(!isAdmin())return;
+  const uniqueModels=[];const seen=new Set();
+  S.inventory.forEach(function(i){if(!seen.has(i.model)){seen.add(i.model);uniqueModels.push({model:i.model,mk:i.mk});}});
+  let modelOpts='<option value="">— เลือกเครื่องพิมพ์ —</option>';
+  uniqueModels.forEach(function(m){modelOpts+='<option value="'+esc(m.model)+'" data-mk="'+esc(m.mk)+'">'+esc(m.model)+'</option>';});
+  modelOpts+='<option value="__new__">+ เพิ่มรุ่นใหม่…</option>';
+  document.getElementById('modal-root').innerHTML=`
+  <div class="modal-bg" onclick="if(event.target===this)closeModal()">
+    <div class="card fade-up" style="width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden;max-height:92vh;display:flex;flex-direction:column">
+      <div style="height:4px;background:linear-gradient(90deg,#4f46e5,#7c3aed)"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f1f5f9;flex-shrink:0">
+        <div><div style="font-size:15px;font-weight:700;color:#1e293b">เพิ่มรายการหมึกใหม่</div><div style="font-size:11px;color:#94a3b8;margin-top:2px">กรอกข้อมูลหมึกที่ต้องการเพิ่มในระบบ</div></div>
+        <button onclick="closeModal()" class="icon-btn">${I.x}</button>
+      </div>
+      <div style="padding:18px 20px;overflow-y:auto;flex:1;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="grid-column:1/-1">
+          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">ชื่อหมึก <span style="color:#ef4444">*</span></label>
+          <input id="ai-name" type="text" placeholder="เช่น หมึกดำ, หมึกฟ้า, ถังหมึกเสีย"/>
+        </div>
+        <div style="grid-column:1/-1">
+          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">เครื่องพิมพ์ <span style="color:#ef4444">*</span></label>
+          <select id="ai-model" onchange="onModelSelect(this)">${modelOpts}</select>
+        </div>
+        <div id="ai-custom-wrap" style="grid-column:1/-1;display:none;flex-direction:column;gap:10px;padding:12px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#64748b;margin-bottom:5px">ชื่อรุ่นเต็ม <span style="color:#ef4444">*</span></label>
+            <input id="ai-model-custom" type="text" placeholder="เช่น Toshiba e-STUDIO 4518A (สำนักงาน)"/>
+          </div>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">รุ่นสั้น <span style="color:#ef4444">*</span></label>
+          <input id="ai-mk" type="text" placeholder="เช่น 4518A" style="opacity:.6" readonly/>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">Part Number</label>
+          <input id="ai-part" type="text" placeholder="เช่น T-FC330AK"/>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">สี <span style="color:#ef4444">*</span></label>
+          <select id="ai-color">
+            <option value="BLACK">⬛ ดำ (BLACK)</option>
+            <option value="CYAN">🔵 ฟ้า (CYAN)</option>
+            <option value="MAGENTA">🔴 ชมพู (MAGENTA)</option>
+            <option value="YELLOW">🟡 เหลือง (YELLOW)</option>
+            <option value="WASTE">🟠 ถังหมึกเสีย (WASTE)</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">ประเภท</label>
+          <select id="ai-type">
+            <option value="TONER">หมึกพิมพ์ (TONER)</option>
+            <option value="WASTE_TONER">ถังหมึกเสีย (WASTE_TONER)</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">จำนวนเริ่มต้น</label>
+          <input id="ai-qty" type="number" min="0" value="0"/>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">สูงสุด</label>
+          <input id="ai-max" type="number" min="1" value="10"/>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">ขั้นต่ำ (แจ้งเตือน)</label>
+          <input id="ai-min" type="number" min="0" value="3"/>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">วิกฤต</label>
+          <input id="ai-crit" type="number" min="0" value="1"/>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">ตำแหน่งจัดเก็บ</label>
+          <input id="ai-loc" type="text" placeholder="เช่น Rack A-1"/>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">ซัพพลายเออร์</label>
+          <input id="ai-sup" type="text" placeholder="เช่น Toshiba Thailand"/>
+        </div>
+        <div id="ai-err" style="grid-column:1/-1;display:none;font-size:13px;color:#dc2626;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;font-weight:500"></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid #f1f5f9;background:#f8fafc;flex-shrink:0">
+        <button onclick="closeModal()" style="padding:10px 20px;border-radius:10px;background:#fff;border:1px solid #e2e8f0;color:#64748b;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'">ยกเลิก</button>
+        <button onclick="confirmAddItem()" style="padding:10px 22px;border-radius:10px;background:#4f46e5;border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;box-shadow:0 2px 8px rgba(79,70,229,.3)" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">+ เพิ่มรายการ</button>
+      </div>
+    </div>
+  </div>`;
+  setTimeout(function(){document.getElementById('ai-name')?.focus();},50);
+}
+function confirmAddItem(){
+  if(!isAdmin())return;
+  const g=function(id){return document.getElementById(id)?.value?.trim()||'';};
+  const name=g('ai-name');
+  const modelSel=document.getElementById('ai-model');
+  const isNew=modelSel?.value==='__new__';
+  const model=isNew?g('ai-model-custom'):modelSel?.value||'';
+  const mk=g('ai-mk');
+  const showErr=function(msg){const el=document.getElementById('ai-err');if(el){el.textContent=msg;el.style.display='block';}};
+  if(!name){showErr('กรุณาระบุชื่อหมึก');return;}
+  if(!model){showErr('กรุณาเลือกหรือพิมพ์ชื่อเครื่องพิมพ์');return;}
+  if(!mk){showErr('กรุณาระบุรุ่นสั้น');return;}
+  const qty=parseInt(g('ai-qty'))||0,mn=parseInt(g('ai-min'))||3,crit=parseInt(g('ai-crit'))||1,mx=parseInt(g('ai-max'))||10;
+  if(crit>=mn||mn>=mx){showErr('วิกฤต < ขั้นต่ำ < สูงสุด (ต้องเรียงน้อยไปมาก)');return;}
+  const nu={id:'i'+Date.now(),name,model,mk,color:g('ai-color')||'BLACK',type:g('ai-type')||'TONER',part:g('ai-part'),qty,min:mn,critical:crit,max:mx,loc:g('ai-loc'),sup:g('ai-sup'),remarks:'',updatedAt:new Date().toISOString()};
+  S.inventory.push(nu);
+  sb.from('inventory').insert(mapInvToDB(nu)).then(function(r){
+    if(r.error){S.inventory=S.inventory.filter(x=>x.id!==nu.id);showToast('เพิ่มหมึกไม่สำเร็จ: '+r.error.message);}
+    else showToast('เพิ่ม "'+nu.name+'" ('+nu.mk+') เรียบร้อยแล้ว','ok');
+  });
+  closeModal();renderContent();
+}
+
 // ─── LOGIN / REGISTER ─────────────────────────────────────────
 function renderLogin(){
   const isReg=S.mode==='register';
@@ -869,7 +994,8 @@ function renderHistory(){
 
 // ─── SETTINGS ─────────────────────────────────────────────────
 function renderSettings(){
-  document.getElementById('header-title').innerHTML=`<div style="font-size:15px;font-weight:700;color:#1e293b">ตั้งค่า</div>`;
+  const addBtn=isAdmin()?'<button onclick="openAddItem()" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:#4f46e5;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Sarabun\',sans-serif;box-shadow:0 2px 8px rgba(79,70,229,.25)" onmouseover="this.style.background=\'#4338ca\'" onmouseout="this.style.background=\'#4f46e5\'">'+I.plus+' เพิ่มหมึก</button>':'';
+  document.getElementById('header-title').innerHTML='<div style="display:flex;align-items:center;gap:14px"><div><div style="font-size:15px;font-weight:700;color:#1e293b">ตั้งค่า</div><div style="font-size:11px;color:#94a3b8;margin-top:1px">จัดการเกณฑ์สต็อกและรายการหมึก</div></div>'+addBtn+'</div>';
   const canEdit=isAdmin();
   const grouped={};
   S.inventory.forEach(i=>{if(!grouped[i.model])grouped[i.model]=[];grouped[i.model].push(i);});
