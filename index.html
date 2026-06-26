@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TonerTrack · สต็อกหมึกพิมพ์ IT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+*::-webkit-scrollbar{width:5px;height:5px}
+*::-webkit-scrollbar-track{background:#f1f5f9}
+*::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
+body{font-family:'Sarabun',sans-serif;background:#f0f4f8;color:#1e293b;-webkit-font-smoothing:antialiased}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;transition:box-shadow .2s,transform .2s}
+.card-hover:hover{box-shadow:0 8px 30px rgba(0,0,0,.1);transform:translateY(-2px)}
+.card-sm{background:#fff;border:1px solid #e2e8f0;border-radius:12px}
+.mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;color:#64748b;border:1px solid transparent}
+.sidebar-item:hover{background:#f1f5f9;color:#1e293b}
+.sidebar-item.active{background:#ede9fe;color:#4f46e5;border-color:#c4b5fd}
+.tab{padding:6px 12px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid #e2e8f0;transition:all .15s;color:#64748b;background:#fff}
+.tab:hover{background:#f8fafc;border-color:#cbd5e1;color:#1e293b}
+.tab.t-all{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.tab.t-normal{background:#dcfce7;color:#16a34a;border-color:#86efac}
+.tab.t-low{background:#fef3c7;color:#d97706;border-color:#fcd34d}
+.tab.t-critical{background:#fee2e2;color:#dc2626;border-color:#fca5a5}
+.tab.t-empty{background:#f1f5f9;color:#64748b;border-color:#cbd5e1}
+.btn-add{display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:10px;background:#dcfce7;border:1px solid #86efac;color:#16a34a;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;font-family:'Sarabun',sans-serif}
+.btn-add:hover{background:#bbf7d0;transform:scale(1.03)}
+.btn-add:active{transform:scale(.97)}
+.btn-add:disabled{opacity:.3;cursor:not-allowed;transform:none}
+.btn-use{display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:10px;background:#fff;border:1px solid #e2e8f0;color:#64748b;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;font-family:'Sarabun',sans-serif}
+.btn-use:hover{background:#fee2e2;border-color:#fca5a5;color:#dc2626}
+.btn-use:active{transform:scale(.97)}
+.btn-use:disabled{opacity:.3;cursor:not-allowed;transform:none}
+.progress-track{width:100%;height:8px;background:#f1f5f9;border-radius:99px;overflow:hidden}
+.progress-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+input,textarea,select{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;color:#1e293b;padding:9px 12px;font-size:14px;outline:none;width:100%;box-sizing:border-box;font-family:'Sarabun',sans-serif;transition:border .15s,background .15s}
+input::placeholder,textarea::placeholder{color:#cbd5e1}
+input:focus,textarea:focus,select:focus{border-color:#6366f1;background:#fff;box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+input[type=number]{font-family:'JetBrains Mono',monospace}
+select option{background:#fff;color:#1e293b}
+table{width:100%;border-collapse:collapse}
+th{padding:11px 16px;text-align:left;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid #f1f5f9;white-space:nowrap}
+td{padding:12px 16px;font-size:13px;color:#475569;border-bottom:1px solid #f8fafc}
+tr:hover td{background:#f8fafc}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+@keyframes pulse-r{0%,100%{opacity:.5}50%{opacity:1}}
+.fade-up{animation:fadeUp .3s ease-out both}
+.pulse-r{animation:pulse-r 1.8s ease-in-out infinite}
+.modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.35);backdrop-filter:blur(4px);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+.notif-overlay{position:fixed;inset:0;z-index:40}
+.notif-panel{position:fixed;right:0;top:0;bottom:0;width:340px;z-index:41;animation:slideIn .2s ease-out;background:#fff;border-left:1px solid #e2e8f0;box-shadow:-8px 0 40px rgba(0,0,0,.08);display:flex;flex-direction:column}
+.icon-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;background:none;border:none;cursor:pointer;color:#94a3b8;transition:all .15s}
+.icon-btn:hover{background:#f1f5f9;color:#4f46e5}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ─── ICONS ───────────────────────────────────────────────────
+const I={
+  printer:`<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z"/></svg>`,
+  home:`<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>`,
+  cube:`<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/></svg>`,
+  clock:`<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+  cog:`<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>`,
+  logout:`<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/></svg>`,
+  bell:`<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>`,
+  bars:`<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>`,
+  refresh:`<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>`,
+  plus:`<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>`,
+  minus:`<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15"/></svg>`,
+  x:`<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>`,
+  check:`<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>`,
+  fire:`<svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12.963 2.286a.75.75 0 00-1.071-.136 9.742 9.742 0 00-3.539 6.177A7.547 7.547 0 016.648 6.61a.75.75 0 00-1.152.082A9 9 0 1015.68 4.534a7.46 7.46 0 01-2.717-2.248zM15.75 14.25a3.75 3.75 0 11-7.313-1.172c.628.465 1.35.81 2.133 1a5.99 5.99 0 011.925-3.545 3.75 3.75 0 013.255 3.717z" clip-rule="evenodd"/></svg>`,
+  warn:`<svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd"/></svg>`,
+  info:`<svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 01.67 1.34l-.04.022c-1.147.573-2.438-.463-2.127-1.706l.71-2.836-.042.02a.75.75 0 11-.671-1.34l.041-.022zM12 9a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd"/></svg>`,
+  search:`<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803 7.5 7.5 0 0015.803 15.803z"/></svg>`,
+  eye:`<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>`,
+  eyeoff:`<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/></svg>`,
+  map:`<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>`,
+  truck:`<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/></svg>`,
+};
+
+// ─── DATA ─────────────────────────────────────────────────────
+const USERS=[
+  {id:'u1',username:'admin',password:'Admin@123456',fullName:'IT Administrator',role:'ADMIN'},
+  {id:'u2',username:'itstaff',password:'Staff@123456',fullName:'IT Support Staff',role:'STAFF'},
+  {id:'u3',username:'viewer',password:'Viewer@123456',fullName:'IT Manager',role:'VIEWER'},
+];
+const DEF_INV=[
+  {id:'i1',name:'หมึกดำ',model:'Toshiba e-STUDIO 330AC (เครื่องเล็ก)',mk:'330AC',color:'BLACK',type:'TONER',part:'T-FC330AK',qty:6,min:3,critical:1,max:10,loc:'Rack A-1',sup:'Toshiba Thailand Co., Ltd.'},
+  {id:'i2',name:'หมึกฟ้า',model:'Toshiba e-STUDIO 330AC (เครื่องเล็ก)',mk:'330AC',color:'CYAN',type:'TONER',part:'T-FC330AC',qty:1,min:3,critical:1,max:10,loc:'Rack A-2',sup:'Toshiba Thailand Co., Ltd.'},
+  {id:'i3',name:'หมึกชมพู',model:'Toshiba e-STUDIO 330AC (เครื่องเล็ก)',mk:'330AC',color:'MAGENTA',type:'TONER',part:'T-FC330AM',qty:0,min:3,critical:1,max:10,loc:'Rack A-3',sup:'Toshiba Thailand Co., Ltd.'},
+  {id:'i4',name:'หมึกเหลือง',model:'Toshiba e-STUDIO 330AC (เครื่องเล็ก)',mk:'330AC',color:'YELLOW',type:'TONER',part:'T-FC330AY',qty:2,min:3,critical:1,max:10,loc:'Rack A-4',sup:'Toshiba Thailand Co., Ltd.'},
+  {id:'i5',name:'ถังหมึกเสีย',model:'Toshiba e-STUDIO 330AC (เครื่องเล็ก)',mk:'330AC',color:'WASTE',type:'WASTE_TONER',part:'TB-FC330E',qty:4,min:2,critical:1,max:6,loc:'Rack B-1',sup:'Toshiba Thailand Co., Ltd.'},
+  {id:'i6',name:'หมึกดำ',model:'Toshiba e-STUDIO 2521AC (เครื่องใหญ่)',mk:'2521AC',color:'BLACK',type:'TONER',part:'T-FC2521AK',qty:5,min:3,critical:1,max:10,loc:'Rack C-1',sup:'Toshiba Thailand Co., Ltd.'},
+  {id:'i7',name:'หมึกฟ้า',model:'Toshiba e-STUDIO 2521AC (เครื่องใหญ่)',mk:'2521AC',color:'CYAN',type:'TONER',part:'T-FC2521AC',qty:1,min:3,critical:1,max:10,loc:'Rack C-2',sup:'Toshiba Thailand Co., Ltd.'},
+  {id:'i8',name:'หมึกชมพู',model:'Toshiba e-STUDIO 2521AC (เครื่องใหญ่)',mk:'2521AC',color:'MAGENTA',type:'TONER',part:'T-FC2521AM',qty:3,min:3,critical:1,max:10,loc:'Rack C-3',sup:'Toshiba Thailand Co., Ltd.'},
+  {id:'i9',name:'หมึกเหลือง',model:'Toshiba e-STUDIO 2521AC (เครื่องใหญ่)',mk:'2521AC',color:'YELLOW',type:'TONER',part:'T-FC2521AY',qty:2,min:3,critical:1,max:10,loc:'Rack C-4',sup:'Toshiba Thailand Co., Ltd.'},
+  {id:'i10',name:'ถังหมึกเสีย',model:'Toshiba e-STUDIO 2521AC (เครื่องใหญ่)',mk:'2521AC',color:'WASTE',type:'WASTE_TONER',part:'TB-FC2521E',qty:0,min:2,critical:1,max:6,loc:'Rack D-1',sup:'Toshiba Thailand Co., Ltd.'},
+];
+const t=Date.now();
+const DEF_HIST=[
+  {id:'h1',iid:'i1',name:'หมึกดำ',mk:'330AC',color:'BLACK',oq:5,nq:6,ct:'INCREASE',reason:'เติมสต็อกประจำเดือน',user:'IT Administrator',date:new Date(t-2*36e5).toISOString()},
+  {id:'h2',iid:'i2',name:'หมึกฟ้า',mk:'330AC',color:'CYAN',oq:3,nq:1,ct:'DECREASE',reason:'เติมหมึกเครื่องพิมพ์',user:'IT Support Staff',date:new Date(t-5*36e5).toISOString()},
+  {id:'h3',iid:'i3',name:'หมึกชมพู',mk:'330AC',color:'MAGENTA',oq:1,nq:0,ct:'DECREASE',reason:'เติมหมึกเครื่องพิมพ์',user:'IT Support Staff',date:new Date(t-8*36e5).toISOString()},
+  {id:'h4',iid:'i4',name:'หมึกเหลือง',mk:'330AC',color:'YELLOW',oq:4,nq:2,ct:'DECREASE',reason:'เติมหมึกเครื่องพิมพ์',user:'IT Support Staff',date:new Date(t-24*36e5).toISOString()},
+  {id:'h5',iid:'i5',name:'ถังหมึกเสีย',mk:'330AC',color:'WASTE',oq:3,nq:4,ct:'INCREASE',reason:'รับสินค้าจาก'
+  ,user:'IT Administrator',date:new Date(t-48*36e5).toISOString()},
+  {id:'h6',iid:'i10',name:'ถังหมึกเสีย',mk:'2521AC',color:'WASTE',oq:1,nq:0,ct:'DECREASE',reason:'ถังหมึกเสียเต็มแล้ว',user:'IT Support Staff',date:new Date(t-12*36e5).toISOString()},
+];
+function defNotifs(){return[
+  {id:'n1',type:'CRITICAL',title:'หมดแล้ว — หมึกชมพู (330AC)',msg:'หมึกชมพู เครื่องเล็ก 330AC หมดแล้ว กรุณาสั่งซื้อด่วน',read:false,date:new Date(t-8*36e5).toISOString()},
+  {id:'n2',type:'CRITICAL',title:'หมดแล้ว — ถังหมึกเสีย (2521AC)',msg:'ถังหมึกเสีย เครื่องใหญ่ 2521AC หมดแล้ว กรุณาจัดหาด่วน',read:false,date:new Date(t-12*36e5).toISOString()},
+  {id:'n3',type:'CRITICAL',title:'วิกฤต — หมึกฟ้า (330AC)',msg:'หมึกฟ้า เครื่องเล็ก 330AC เหลือน้อยมาก (เหลือ 1 กล่อง)',read:false,date:new Date(t-5*36e5).toISOString()},
+  {id:'n4',type:'CRITICAL',title:'วิกฤต — หมึกฟ้า (2521AC)',msg:'หมึกฟ้า เครื่องใหญ่ 2521AC เหลือน้อยมาก (เหลือ 1 กล่อง)',read:false,date:new Date(t-6*36e5).toISOString()},
+  {id:'n5',type:'WARNING',title:'ใกล้หมด — หมึกเหลือง (330AC)',msg:'หมึกเหลือง เครื่องเล็ก 330AC ใกล้หมด (เหลือ 2 กล่อง ขั้นต่ำ 3)',read:false,date:new Date(t-24*36e5).toISOString()},
+  {id:'n6',type:'WARNING',title:'ใกล้หมด — หมึกเหลือง (2521AC)',msg:'หมึกเหลือง เครื่องใหญ่ 2521AC ใกล้หมด (เหลือ 2 กล่อง)',read:true,date:new Date(t-36*36e5).toISOString()},
+  {id:'n7',type:'INFO',title:'เติมสต็อกแล้ว — หมึกดำ (330AC)',msg:'หมึกดำ เครื่องเล็ก 330AC เติมสต็อกเรียบร้อย (5 → 6 กล่อง)',read:true,date:new Date(t-2*36e5).toISOString()},
+];}
+
+// ─── STATE ────────────────────────────────────────────────────
+let S={page:'login',mode:'login',user:null,sidebarOpen:true,notifOpen:false,filter:'ALL',search:'',settingsItem:null,showPass:false,showPass2:false,loginErr:'',regErr:'',regOk:'',inventory:[],history:[],notifications:[],histPage:1,customUsers:[]};
+
+function load(){
+  const raw=localStorage.getItem('toner-v3');
+  if(raw){try{const p=JSON.parse(raw);S.inventory=p.inv||DEF_INV.map(x=>({...x}));S.history=p.hist||[...DEF_HIST];S.notifications=p.notifs||defNotifs();S.customUsers=p.cu||[];if(p.user){S.user=p.user;S.page='dashboard';}}catch(e){reset();}}
+  else reset();
+}
+function reset(){S.inventory=DEF_INV.map(x=>({...x}));S.history=[...DEF_HIST];S.notifications=defNotifs();S.customUsers=[];}
+function save(){localStorage.setItem('toner-v3',JSON.stringify({inv:S.inventory,hist:S.history,notifs:S.notifications,user:S.user,cu:S.customUsers}));}
+
+// ─── UTILS ────────────────────────────────────────────────────
+function status(item){
+  if(item.qty===0)return'OUT_OF_STOCK';
+  if(item.qty<=item.critical)return'CRITICAL';
+  if(item.qty<=item.min)return'LOW';
+  return'NORMAL';
+}
+const SC={
+  NORMAL:{label:'ปกติ',c:'#16a34a',bg:'#dcfce7',br:'#86efac',text:'#15803d'},
+  LOW:{label:'ใกล้หมด',c:'#d97706',bg:'#fef3c7',br:'#fcd34d',text:'#b45309'},
+  CRITICAL:{label:'วิกฤต',c:'#dc2626',bg:'#fee2e2',br:'#fca5a5',text:'#b91c1c'},
+  OUT_OF_STOCK:{label:'หมดแล้ว',c:'#64748b',bg:'#f1f5f9',br:'#cbd5e1',text:'#475569'},
+};
+const TC={
+  BLACK:{hex:'#334155',name:'ดำ'},CYAN:{hex:'#0891b2',name:'ฟ้า'},
+  MAGENTA:{hex:'#db2777',name:'แดง'},YELLOW:{hex:'#ca8a04',name:'เหลือง'},
+  WASTE:{hex:'#ea580c',name:'เสีย'},
+};
+const NIC={CRITICAL:{c:'#dc2626',bg:'#fee2e2',border:'#fca5a5',icon:'fire'},WARNING:{c:'#d97706',bg:'#fef3c7',border:'#fcd34d',icon:'warn'},INFO:{c:'#2563eb',bg:'#dbeafe',border:'#93c5fd',icon:'info'}};
+const CTC={INCREASE:{label:'เพิ่ม',c:'#16a34a',bg:'#dcfce7'},DECREASE:{label:'ลด',c:'#dc2626',bg:'#fee2e2'},SET:{label:'ตั้งค่า',c:'#2563eb',bg:'#dbeafe'},RESTOCK:{label:'เติมสต็อก',c:'#0891b2',bg:'#cffafe'},ADJUSTMENT:{label:'ปรับแก้',c:'#7c3aed',bg:'#ede9fe'}};
+
+function ago(d){const s=Math.floor((Date.now()-new Date(d))/1000);if(s<60)return'เมื่อกี้';if(s<3600)return Math.floor(s/60)+' นาทีที่แล้ว';if(s<86400)return Math.floor(s/3600)+' ชม.ที่แล้ว';return Math.floor(s/86400)+' วันที่แล้ว';}
+function fmtDt(d){const dt=new Date(d);return dt.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'2-digit'})+' '+dt.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});}
+function uid(){return'x'+Math.random().toString(36).slice(2,9);}
+function unread(){return S.notifications.filter(n=>!n.read).length;}
+function stats(){const v=S.inventory;return{total:v.length,normal:v.filter(i=>status(i)==='NORMAL').length,low:v.filter(i=>status(i)==='LOW').length,critical:v.filter(i=>status(i)==='CRITICAL').length,outOfStock:v.filter(i=>status(i)==='OUT_OF_STOCK').length,today:S.history.filter(h=>new Date(h.date)>new Date(new Date().setHours(0,0,0,0))).length};}
+function pct(qty,max){return max>0?Math.min(100,Math.round(qty/max*100)):0;}
+function tonerDot(color,size=10){const tc=TC[color]||TC.BLACK;return`<span style="width:${size}px;height:${size}px;border-radius:50%;background:${tc.hex};display:inline-block;flex-shrink:0"></span>`;}
+function badge(st){const c=SC[st];return`<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:12px;font-weight:700;background:${c.bg};color:${c.text};border:1px solid ${c.br}">${st==='CRITICAL'?`<span style="width:6px;height:6px;border-radius:50%;background:${c.c};display:inline-block" class="pulse-r"></span>`:''}${c.label}</span>`;}
+
+// ─── ACTIONS ──────────────────────────────────────────────────
+function doLogin(){
+  const u=document.getElementById('lu').value.trim();
+  const p=document.getElementById('lp').value;
+  const user=USERS.find(x=>x.username===u&&x.password===p)||S.customUsers.find(x=>x.username===u&&x.password===p);
+  if(!user){S.loginErr='ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';S.mode='login';renderLogin();return;}
+  S.user=user;S.page='dashboard';S.loginErr='';S.regOk='';save();render();
+}
+function doLogout(){S.user=null;S.page='login';S.mode='login';S.notifOpen=false;localStorage.removeItem('toner-v3');render();}
+function doRegister(){
+  const u=document.getElementById('ru').value.trim();
+  const fn=document.getElementById('rn').value.trim();
+  const em=document.getElementById('re').value.trim().toLowerCase();
+  const p=document.getElementById('rp').value;
+  const p2=document.getElementById('rp2').value;
+  if(!u||!fn||!em||!p){S.regErr='กรุณากรอกข้อมูลให้ครบทุกช่อง';renderLogin();return;}
+  if(p.length<6){S.regErr='รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';renderLogin();return;}
+  if(p!==p2){S.regErr='รหัสผ่านยืนยันไม่ตรงกัน';renderLogin();return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){S.regErr='รูปแบบอีเมลไม่ถูกต้อง';renderLogin();return;}
+  const all=[...USERS,...S.customUsers];
+  if(all.find(x=>x.username===u)){S.regErr='ชื่อผู้ใช้นี้ถูกใช้แล้ว';renderLogin();return;}
+  if(all.find(x=>x.email&&x.email===em)){S.regErr='อีเมลนี้ถูกใช้แล้ว';renderLogin();return;}
+  S.customUsers.push({id:'u'+Date.now(),username:u,fullName:fn,email:em,password:p,role:'STAFF',createdAt:new Date().toISOString()});
+  S.regErr='';S.regOk='สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบด้วยบัญชีใหม่';S.mode='login';
+  save();renderLogin();
+}
+function nav(page){S.page=page;S.filter='ALL';S.search='';S.notifOpen=false;S.settingsItem=null;S.histPage=1;renderContent();}
+function setFilter(f){S.filter=f;renderContent();}
+function setSearch(v){S.search=v;renderContent();}
+
+function changeQty(id,delta){
+  const item=S.inventory.find(i=>i.id===id);if(!item)return;
+  const newQty=Math.max(0,item.qty+delta);
+  if(Math.abs(delta)>=3||newQty===0){openReasonPrompt(id,delta);return;}
+  applyQtyChange(id,newQty,delta>0?'เพิ่มด้วยตนเอง':'ลดด้วยตนเอง',delta>=0?'INCREASE':'DECREASE');
+}
+function applyQtyChange(id,newQty,reason,ct){
+  const item=S.inventory.find(i=>i.id===id);if(!item)return;
+  const prev=status(item);const oq=item.qty;
+  item.qty=Math.max(0,newQty);item.updatedAt=new Date().toISOString();
+  S.history.unshift({id:uid(),iid:id,name:item.name,mk:item.mk,color:item.color,oq,nq:item.qty,ct:ct||'SET',reason,user:S.user?.fullName||'System',date:new Date().toISOString()});
+  const nst=status(item);
+  if(nst!==prev){
+    const nt=nst==='OUT_OF_STOCK'||nst==='CRITICAL'?'CRITICAL':'WARNING';
+    S.notifications.unshift({id:uid(),type:nt,read:false,date:new Date().toISOString(),title:`${SC[nst].label} — ${item.name} (${item.mk})`,msg:`${item.name} (${item.mk}) อยู่ที่ ${item.qty} กล่อง`});
+  }
+  save();
+  const card=document.querySelector(`[data-card="${id}"]`);
+  if(card){const ctx=card.dataset?.context||'inventory';card.outerHTML=renderCard(item,S.inventory.indexOf(item),ctx);}
+  const nb=document.getElementById('notif-badge');
+  if(nb){nb.textContent=unread()||'';nb.style.display=unread()?'flex':'none';}
+}
+function openReasonPrompt(id,delta){
+  const item=S.inventory.find(i=>i.id===id);if(!item)return;
+  const newQty=Math.max(0,item.qty+delta);
+  const tc=TC[item.color]||TC.BLACK;const isInc=delta>0;
+  document.getElementById('modal-root').innerHTML=`
+  <div class="modal-bg" onclick="if(event.target===this)closeModal()">
+    <div class="card fade-up" style="width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden">
+      <div style="height:4px;background:${tc.hex}"></div>
+      <div style="padding:20px 22px">
+        <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:4px">${isInc?'เพิ่มสต็อก':'ลดสต็อก'} — ${item.name}</div>
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:16px">${item.mk} · ${item.qty} → ${newQty} กล่อง</div>
+        <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">หมายเหตุ <span style="color:#94a3b8;font-weight:400">(ไม่บังคับ)</span></label>
+        <input id="reason-input" type="text" placeholder="${isInc?'เช่น รับสินค้าจากซัพพลายเออร์':'เช่น เติมหมึกเครื่องพิมพ์'}"
+          onkeydown="if(event.key==='Enter')confirmChangeQty('${id}',${delta})"/>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+          <button onclick="closeModal()" style="padding:9px 18px;border-radius:10px;background:#fff;border:1px solid #e2e8f0;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'">ยกเลิก</button>
+          <button onclick="confirmChangeQty('${id}',${delta})" style="padding:9px 18px;border-radius:10px;background:#4f46e5;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">ยืนยัน</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  setTimeout(()=>document.getElementById('reason-input')?.focus(),50);
+}
+function confirmChangeQty(id,delta){
+  const reason=document.getElementById('reason-input')?.value.trim()||'';
+  const item=S.inventory.find(i=>i.id===id);if(!item)return;
+  const newQty=Math.max(0,item.qty+delta);
+  closeModal();
+  applyQtyChange(id,newQty,reason||(delta>0?'เพิ่มด้วยตนเอง':'ลดด้วยตนเอง'),delta>=0?'INCREASE':'DECREASE');
+}
+function openQtyEdit(id){
+  if(S.user?.role==='VIEWER')return;
+  const item=S.inventory.find(i=>i.id===id);if(!item)return;
+  const tc=TC[item.color]||TC.BLACK;
+  document.getElementById('modal-root').innerHTML=`
+  <div class="modal-bg" onclick="if(event.target===this)closeModal()">
+    <div class="card fade-up" style="width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden">
+      <div style="height:4px;background:${tc.hex}"></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid #f1f5f9">
+        ${tonerDot(item.color,14)}
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:700;color:#1e293b">${item.name} — ตั้งค่าจำนวน</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:1px">${item.model}</div>
+        </div>
+        <button onclick="closeModal()" class="icon-btn">${I.x}</button>
+      </div>
+      <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div style="text-align:center;padding:14px;background:#f8fafc;border-radius:12px;border:1px solid #f1f5f9">
+          <div style="font-size:12px;color:#94a3b8;margin-bottom:4px">ปัจจุบัน</div>
+          <div class="mono" style="font-size:40px;font-weight:800;line-height:1;color:${tc.hex}">${item.qty}</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px">กล่อง</div>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">ระบุจำนวนใหม่ <span style="font-size:11px;color:#94a3b8">(0–${item.max} กล่อง)</span></label>
+          <input id="qty-input" type="number" min="0" max="${item.max}" value="${item.qty}"
+            style="font-size:22px;font-weight:700;text-align:center;color:#1e293b"
+            onkeydown="if(event.key==='Enter')document.getElementById('qty-reason').focus()"/>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">หมายเหตุ <span style="color:#94a3b8;font-weight:400">(ไม่บังคับ)</span></label>
+          <input id="qty-reason" type="text" placeholder="เช่น รับสินค้าจากซัพพลายเออร์"
+            onkeydown="if(event.key==='Enter')confirmQtyEdit('${id}')"/>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid #f1f5f9;background:#f8fafc">
+        <button onclick="closeModal()" style="padding:10px 20px;border-radius:10px;background:#fff;border:1px solid #e2e8f0;color:#64748b;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'">ยกเลิก</button>
+        <button onclick="confirmQtyEdit('${id}')" style="padding:10px 22px;border-radius:10px;background:#4f46e5;border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;box-shadow:0 2px 8px rgba(79,70,229,.3)" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">บันทึก</button>
+      </div>
+    </div>
+  </div>`;
+  setTimeout(()=>document.getElementById('qty-input')?.focus(),50);
+}
+function confirmQtyEdit(id){
+  const item=S.inventory.find(i=>i.id===id);if(!item)return;
+  const newQty=parseInt(document.getElementById('qty-input')?.value);
+  if(isNaN(newQty)||newQty<0){alert('กรุณาระบุจำนวนที่ถูกต้อง');return;}
+  const reason=document.getElementById('qty-reason')?.value.trim()||'ตั้งค่าจำนวนใหม่';
+  const delta=newQty-item.qty;
+  closeModal();
+  applyQtyChange(id,newQty,reason,delta>0?'INCREASE':delta<0?'DECREASE':'SET');
+}
+function closeModal(){document.getElementById('modal-root').innerHTML='';S.settingsItem=null;}
+function openSettings(id){S.settingsItem=id;renderModal();}
+function closeSettings(){closeModal();}
+function saveSettings(){
+  const id=S.settingsItem;const item=S.inventory.find(i=>i.id===id);if(!item)return;
+  const g=k=>document.getElementById('sf-'+k)?.value;
+  const crit=parseInt(g('crit'))||0,mn=parseInt(g('min'))||0,mx=parseInt(g('max'))||1;
+  if(crit>=mn||mn>=mx){alert('วิกฤต < ขั้นต่ำ < สูงสุด (ต้องเรียงน้อยไปมาก)');return;}
+  item.critical=crit;item.min=mn;item.max=mx;
+  item.loc=g('loc')||item.loc;item.sup=g('sup')||item.sup;item.remarks=g('rem')||'';
+  save();closeSettings();renderContent();
+}
+function markAllRead(){S.notifications.forEach(n=>n.read=true);save();renderNotifPanel();}
+function toggleNotif(){S.notifOpen=!S.notifOpen;if(S.notifOpen)renderNotifPanel();else document.getElementById('notif-root').innerHTML='';}
+
+// ─── LOGIN / REGISTER ─────────────────────────────────────────
+function renderLogin(){
+  const isReg=S.mode==='register';
+  const errHtml=isReg&&S.regErr?'<div style="font-size:13px;color:#dc2626;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;font-weight:500">'+S.regErr+'</div>':'';
+  const okHtml=!isReg&&S.regOk?'<div style="font-size:13px;color:#16a34a;background:#dcfce7;border:1px solid #86efac;border-radius:10px;padding:10px 14px;font-weight:500">'+S.regOk+'</div>':'';
+  const loginErrHtml=!isReg&&S.loginErr?'<div style="font-size:13px;color:#dc2626;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;font-weight:500">'+S.loginErr+'</div>':'';
+  const eyeBtn='<button onclick="S.showPass=!S.showPass;renderLogin()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;display:flex;padding:0">'+(S.showPass?I.eyeoff:I.eye)+'</button>';
+  const eyeBtn2='<button onclick="S.showPass2=!S.showPass2;renderLogin()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;display:flex;padding:0">'+(S.showPass2?I.eyeoff:I.eye)+'</button>';
+
+  let formHtml;
+  if(isReg){
+    formHtml='<div style="display:flex;flex-direction:column;gap:12px">'
+      +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px">ชื่อผู้ใช้ <span style="color:#ef4444">*</span></label>'
+      +'<input id="ru" type="text" placeholder="ตัวอักษรภาษาอังกฤษ ตัวเลข" autocomplete="username" onkeydown="if(event.key===\'Enter\')document.getElementById(\'rn\').focus()"/></div>'
+      +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px">ชื่อ-นามสกุล <span style="color:#ef4444">*</span></label>'
+      +'<input id="rn" type="text" placeholder="ชื่อที่แสดงในระบบ" onkeydown="if(event.key===\'Enter\')document.getElementById(\'re\').focus()"/></div>'
+      +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px">อีเมล <span style="color:#ef4444">*</span></label>'
+      +'<input id="re" type="email" placeholder="example@company.com" onkeydown="if(event.key===\'Enter\')document.getElementById(\'rp\').focus()"/></div>'
+      +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px">รหัสผ่าน <span style="color:#ef4444">*</span></label>'
+      +'<div style="position:relative"><input id="rp" type="'+(S.showPass?'text':'password')+'" placeholder="อย่างน้อย 6 ตัวอักษร" style="padding-right:40px" onkeydown="if(event.key===\'Enter\')document.getElementById(\'rp2\').focus()"/>'+eyeBtn+'</div></div>'
+      +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px">ยืนยันรหัสผ่าน <span style="color:#ef4444">*</span></label>'
+      +'<div style="position:relative"><input id="rp2" type="'+(S.showPass2?'text':'password')+'" placeholder="กรอกรหัสผ่านอีกครั้ง" style="padding-right:40px" onkeydown="if(event.key===\'Enter\')doRegister()"/>'+eyeBtn2+'</div></div>'
+      +errHtml
+      +'<button onclick="doRegister()" style="width:100%;padding:12px;border-radius:12px;background:#4f46e5;color:#fff;font-size:15px;font-weight:700;cursor:pointer;border:none;margin-top:2px;box-shadow:0 4px 12px rgba(79,70,229,.3);font-family:\'Sarabun\',sans-serif" onmouseover="this.style.background=\'#4338ca\'" onmouseout="this.style.background=\'#4f46e5\'">สมัครสมาชิก</button>'
+      +'<div style="font-size:12px;color:#94a3b8;background:#f8fafc;border-radius:8px;padding:8px 12px">บัญชีใหม่จะได้รับสิทธิ์ Staff สามารถขอ Admin ได้ภายหลัง</div>'
+      +'</div>';
+  } else {
+    formHtml='<div style="display:flex;flex-direction:column;gap:14px">'
+      +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">ชื่อผู้ใช้</label>'
+      +'<input id="lu" type="text" placeholder="กรอกชื่อผู้ใช้" autocomplete="username" onkeydown="if(event.key===\'Enter\')document.getElementById(\'lp\').focus()"/></div>'
+      +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">รหัสผ่าน</label>'
+      +'<div style="position:relative"><input id="lp" type="'+(S.showPass?'text':'password')+'" placeholder="กรอกรหัสผ่าน" autocomplete="current-password" onkeydown="if(event.key===\'Enter\')doLogin()" style="padding-right:40px"/>'+eyeBtn+'</div></div>'
+      +loginErrHtml+okHtml
+      +'<button onclick="doLogin()" style="width:100%;padding:12px;border-radius:12px;background:#4f46e5;color:#fff;font-size:15px;font-weight:700;cursor:pointer;border:none;margin-top:4px;box-shadow:0 4px 12px rgba(79,70,229,.3);font-family:\'Sarabun\',sans-serif" onmouseover="this.style.background=\'#4338ca\'" onmouseout="this.style.background=\'#4f46e5\'">เข้าสู่ระบบ</button>'
+      +'</div>';
+  }
+
+  document.getElementById('app').innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;background:linear-gradient(135deg,#f0f4ff 0%,#e8f0fe 60%,#f5f0ff 100%)">'
+    +'<div style="width:100%;max-width:'+(isReg?400:360)+'px">'
+    +'<div class="card" style="box-shadow:0 4px 24px rgba(79,70,229,.12);overflow:hidden">'
+    +'<div style="height:4px;background:linear-gradient(90deg,#4f46e5,#7c3aed)"></div>'
+    +'<div style="padding:28px">'
+    +'<div style="text-align:center;margin-bottom:24px">'
+    +'<div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#4f46e5,#7c3aed);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;box-shadow:0 4px 16px rgba(79,70,229,.3);color:#fff">'+I.printer+'</div>'
+    +'<div style="font-size:21px;font-weight:700;color:#1e293b">TonerTrack</div>'
+    +'<div style="font-size:12px;color:#94a3b8;margin-top:3px">'+(isReg?'สร้างบัญชีใหม่':'ระบบจัดการสต็อกหมึกพิมพ์ · IT')+'</div>'
+    +'</div>'
+    +'<div style="display:flex;border-radius:10px;background:#f1f5f9;padding:3px;gap:3px;margin-bottom:20px">'
+    +'<button onclick="S.mode=\'login\';S.loginErr=\'\';S.regErr=\'\';renderLogin()" style="flex:1;padding:8px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Sarabun\',sans-serif;transition:all .15s;background:'+(isReg?'none':'#fff')+';color:'+(isReg?'#94a3b8':'#4f46e5')+';box-shadow:'+(isReg?'none':'0 1px 3px rgba(0,0,0,.08)')+'">เข้าสู่ระบบ</button>'
+    +'<button onclick="S.mode=\'register\';S.loginErr=\'\';S.regErr=\'\';renderLogin()" style="flex:1;padding:8px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Sarabun\',sans-serif;transition:all .15s;background:'+(isReg?'#fff':'none')+';color:'+(isReg?'#4f46e5':'#94a3b8')+';box-shadow:'+(isReg?'0 1px 3px rgba(0,0,0,.08)':'none')+'">สมัครสมาชิก</button>'
+    +'</div>'
+    +formHtml
+    +'</div></div>'
+    +'<div style="text-align:center;font-size:11px;color:#cbd5e1;margin-top:14px">แผนก IT · โรงงานผลิตยา · ระบบภายใน</div>'
+    +'</div></div>';
+
+  const focusId=isReg?'ru':'lu';
+  setTimeout(function(){const el=document.getElementById(focusId);if(el)el.focus();},30);
+}
+
+// ─── SHELL ────────────────────────────────────────────────────
+function renderShell(){
+  document.getElementById('app').innerHTML=`
+  <div style="display:flex;height:100vh;overflow:hidden;background:#f0f4f8">
+    <aside id="sidebar" style="flex-shrink:0;display:flex;flex-direction:column;width:${S.sidebarOpen?'220px':'64px'};transition:width .2s ease;background:#fff;border-right:1px solid #e2e8f0;z-index:20;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:10px;padding:14px 12px;border-bottom:1px solid #f1f5f9;height:57px;flex-shrink:0">
+        <div style="flex-shrink:0;width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);display:flex;align-items:center;justify-content:center;color:#fff">${I.printer}</div>
+        <div style="overflow:hidden;white-space:nowrap;opacity:${S.sidebarOpen?1:0};transition:opacity .2s"><div style="font-size:14px;font-weight:700;color:#1e293b">TonerTrack</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">สต็อกหมึกพิมพ์</div></div>
+      </div>
+      <nav style="flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:2px">
+        ${[['dashboard','home','แดชบอร์ด'],['inventory','cube','คลังหมึก'],['history','clock','ประวัติ'],['settings','cog','ตั้งค่า']].map(([pg,ic,lb])=>`
+        <div class="sidebar-item${S.page===pg?' active':''}" onclick="nav('${pg}')" title="${lb}" style="white-space:nowrap">
+          <span style="flex-shrink:0">${I[ic]}</span><span style="overflow:hidden;opacity:${S.sidebarOpen?1:0};transition:opacity .15s">${lb}</span>
+        </div>`).join('')}
+      </nav>
+      <div style="padding:8px;border-top:1px solid #f1f5f9;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:4px;border-radius:10px;background:#f8fafc;overflow:hidden;opacity:${S.sidebarOpen?1:0};transition:opacity .15s;min-height:42px">
+          <div style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:#ede9fe;border:2px solid #c4b5fd;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#4f46e5">${S.user?.fullName?.charAt(0)||'U'}</div>
+          <div style="min-width:0"><div style="font-size:12px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${S.user?.fullName||''}</div><div style="font-size:10px;color:#94a3b8">${S.user?.role?.toLowerCase()||''}</div></div>
+        </div>
+        <div class="sidebar-item" style="color:#ef4444;white-space:nowrap" onclick="doLogout()" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background=''">
+          <span style="flex-shrink:0">${I.logout}</span><span style="overflow:hidden;opacity:${S.sidebarOpen?1:0};transition:opacity .15s">ออกจากระบบ</span>
+        </div>
+      </div>
+    </aside>
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden">
+      <header style="display:flex;align-items:center;justify-content:space-between;padding:0 18px;height:57px;flex-shrink:0;background:#fff;border-bottom:1px solid #e2e8f0">
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="icon-btn" onclick="S.sidebarOpen=!S.sidebarOpen;const sb=document.getElementById('sidebar');sb.style.width=S.sidebarOpen?'220px':'64px';sb.querySelectorAll('[data-fade]').forEach(el=>el.style.opacity=S.sidebarOpen?1:0)">${I.bars}</button>
+          <div id="header-title"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <button class="icon-btn" onclick="renderContent()" title="รีเฟรช">${I.refresh}</button>
+          <button class="icon-btn" onclick="toggleNotif()" style="position:relative">
+            ${I.bell}
+            <span id="notif-badge" style="position:absolute;top:2px;right:2px;min-width:16px;height:16px;border-radius:99px;background:#ef4444;color:#fff;font-size:9px;font-weight:700;display:${unread()?'flex':'none'};align-items:center;justify-content:center;border:2px solid #fff">${unread()||''}</span>
+          </button>
+        </div>
+      </header>
+      <main id="content" style="flex:1;overflow-y:auto"></main>
+    </div>
+    <div id="notif-root"></div>
+    <div id="modal-root"></div>
+  </div>`;
+}
+
+// ─── KPI ──────────────────────────────────────────────────────
+function renderKPI(st){
+  const cards=[
+    {label:'ทั้งหมด',val:st.total,c:'#4f46e5',bg:'#ede9fe',border:'#c4b5fd'},
+    {label:'ปกติ',val:st.normal,c:'#16a34a',bg:'#dcfce7',border:'#86efac'},
+    {label:'ใกล้หมด',val:st.low,c:'#d97706',bg:'#fef3c7',border:'#fcd34d'},
+    {label:'วิกฤต',val:st.critical,c:'#dc2626',bg:'#fee2e2',border:'#fca5a5'},
+    {label:'หมดแล้ว',val:st.outOfStock,c:'#64748b',bg:'#f1f5f9',border:'#cbd5e1'},
+    {label:'อัปเดตวันนี้',val:st.today,c:'#0891b2',bg:'#cffafe',border:'#67e8f9'},
+  ];
+  return`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">
+  ${cards.map((c,i)=>`
+  <div class="card fade-up" style="padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);animation-delay:${i*40}ms">
+    <div style="font-size:12px;color:#94a3b8;font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">${c.label}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:38px;font-weight:800;color:${c.c};font-family:'JetBrains Mono',monospace;line-height:1">${c.val}</div>
+      <div style="width:38px;height:38px;border-radius:10px;background:${c.bg};border:1px solid ${c.border};display:flex;align-items:center;justify-content:center;flex-shrink:0"></div>
+    </div>
+  </div>`).join('')}
+  </div>`;
+}
+
+// ─── ALERTS ───────────────────────────────────────────────────
+function renderAlerts(){
+  const alerts=S.notifications.filter(n=>!n.read).slice(0,6);
+  if(!alerts.length)return'';
+  const crit=alerts.filter(a=>a.type==='CRITICAL');
+  const warn=alerts.filter(a=>a.type==='WARNING');
+  const sorted=[...alerts].sort((a,b)=>({CRITICAL:0,WARNING:1,INFO:2}[a.type]-{CRITICAL:0,WARNING:1,INFO:2}[b.type]));
+  return`<div class="card fade-up" style="padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block;flex-shrink:0" class="pulse-r"></span>
+      <span style="font-size:15px;font-weight:700;color:#1e293b">ศูนย์แจ้งเตือน</span>
+    </div>
+    <div style="display:flex;gap:6px">
+      ${crit.length?`<span style="font-size:11px;padding:3px 10px;border-radius:99px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;font-weight:700">${I.fire} ${crit.length} วิกฤต</span>`:''}
+      ${warn.length?`<span style="font-size:11px;padding:3px 10px;border-radius:99px;background:#fef3c7;color:#d97706;border:1px solid #fcd34d;font-weight:700">${warn.length} ใกล้หมด</span>`:''}
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:6px">
+  ${sorted.map(n=>{const nc=NIC[n.type];return`
+  <div style="display:flex;gap:10px;padding:11px 14px;border-radius:10px;background:${nc.bg};border:1px solid ${nc.border}">
+    <span style="color:${nc.c};flex-shrink:0;margin-top:2px">${I[nc.icon]}</span>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:${nc.c};margin-bottom:2px">${n.title}</div>
+      <div style="font-size:12px;color:#475569">${n.msg}</div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:4px">${ago(n.date)}</div>
+    </div>
+  </div>`}).join('')}
+  </div></div>`;
+}
+
+// ─── CARD ─────────────────────────────────────────────────────
+function renderCard(item,idx,context){
+  context=context||'inventory';
+  const st=status(item);const tc=TC[item.color]||TC.BLACK;
+  const p=pct(item.qty,item.max);
+  const pcol=st==='NORMAL'?'#22c55e':st==='LOW'?'#f59e0b':st==='CRITICAL'?'#ef4444':'#e2e8f0';
+  const isViewer=S.user?.role==='VIEWER';
+  const isEmpty=item.qty===0;
+  const isDash=context==='dashboard';
+
+  // Pre-compute to avoid triple-nested template literals
+  const borderExtra=st==='CRITICAL'?'border-color:#fca5a5;box-shadow:0 0 0 3px rgba(220,38,38,.06);':st==='OUT_OF_STOCK'?'border-color:#cbd5e1;opacity:.75;':'';
+  const wrapStyle='overflow:hidden;'+borderExtra+'animation-delay:'+(idx*35)+'ms';
+  const qtyColor=isEmpty?'#cbd5e1':tc.hex;
+  const qtyLabel=isEmpty?'หมดแล้ว':'กล่อง';
+  const locLine=item.loc?`<div style="font-size:11px;color:#94a3b8;margin-bottom:12px;display:flex;align-items:center;gap:4px">${I.map} ${item.loc}</div>`:'';
+  const locCenter=item.loc?`<div style="font-size:11px;color:#94a3b8;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:4px">${I.map} ${item.loc}</div>`:'';
+  const minMax=`<div style="display:flex;justify-content:space-between;margin-top:5px"><span style="font-size:11px;color:#94a3b8">ขั้นต่ำ <span class="mono" style="color:#475569;font-weight:600">${item.min}</span></span><span style="font-size:11px;color:#94a3b8">สูงสุด <span class="mono" style="color:#475569;font-weight:600">${item.max}</span></span></div>`;
+  const progressBar=`<div class="progress-track"><div class="progress-fill" style="width:${p}%;background:${pcol}"></div></div>`;
+
+  // ── Dashboard card: minimal ───────────────────────────────
+  if(isDash){
+    const dashActions=isViewer?'':`
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding-top:10px;border-top:1px solid #f1f5f9">
+      <button class="btn-use" onclick="changeQty('${item.id}',-1)" ${isEmpty?'disabled':''} style="padding:7px 12px;font-size:12px">${I.minus} ใช้แล้ว</button>
+      <button onclick="openQtyEdit('${item.id}')" class="mono" style="font-size:14px;font-weight:800;color:#1e293b;min-width:22px;text-align:center;background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:8px" title="คลิกเพื่อตั้งค่าจำนวน" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''">${item.qty}</button>
+      <button class="btn-add" onclick="changeQty('${item.id}',1)" style="padding:7px 12px;font-size:12px">${I.plus} เติม</button>
+    </div>`;
+    return`<div data-card="${item.id}" data-context="dashboard" class="card card-hover fade-up" style="${wrapStyle}">
+  <div style="height:4px;background:${tc.hex}"></div>
+  <div style="padding:14px 16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:7px">
+        ${tonerDot(item.color,11)}
+        <span style="font-size:14px;font-weight:700;color:#1e293b">${item.name}</span>
+      </div>
+      ${badge(st)}
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:${isViewer?0:10}px">
+      <div style="text-align:center;min-width:54px">
+        <div class="mono" style="font-size:${isEmpty?36:44}px;font-weight:800;line-height:1;color:${qtyColor}">${item.qty}</div>
+        <div style="font-size:10px;color:#94a3b8;margin-top:2px">${qtyLabel}</div>
+      </div>
+      <div style="flex:1">${progressBar}</div>
+    </div>
+    ${dashActions}
+  </div></div>`;}
+
+  // ── Inventory card: full ──────────────────────────────────
+  const invBody=isViewer?`
+    <div style="text-align:center;padding:8px 0 14px">
+      <div class="mono" style="font-size:${isEmpty?52:64}px;font-weight:800;line-height:1;color:${qtyColor}">${item.qty}</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:.06em">${qtyLabel}</div>
+      <div style="margin-top:12px">${progressBar}${minMax}</div>
+      ${locCenter}
+    </div>`:`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+      <div style="text-align:center;min-width:64px">
+        <div class="mono" onclick="openQtyEdit('${item.id}')" title="คลิกเพื่อตั้งค่าจำนวน" style="font-size:${isEmpty?38:46}px;font-weight:800;line-height:1;color:${qtyColor};cursor:pointer;padding:4px 6px;border-radius:10px;transition:background .15s" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">${item.qty}</div>
+        <div style="font-size:10px;color:#94a3b8;margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.06em">${qtyLabel}</div>
+      </div>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span style="font-size:11px;color:#94a3b8;font-weight:500">ระดับสต็อก</span>
+          <span class="mono" style="font-size:11px;color:#64748b;font-weight:600">${p}%</span>
+        </div>
+        ${progressBar}${minMax}
+      </div>
+    </div>
+    ${locLine}
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid #f1f5f9">
+      <button class="icon-btn" onclick="openSettings('${item.id}')" title="ตั้งค่า">${I.cog}</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn-use" onclick="changeQty('${item.id}',-1)" ${isEmpty?'disabled':''}>${I.minus} ใช้แล้ว</button>
+        <button onclick="openQtyEdit('${item.id}')" class="mono" title="คลิกเพื่อตั้งค่าจำนวน" style="font-size:15px;font-weight:800;color:#1e293b;min-width:20px;text-align:center;background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:8px" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''">${item.qty}</button>
+        <button class="btn-add" onclick="changeQty('${item.id}',1)">${I.plus} เติม</button>
+      </div>
+    </div>`;
+  return`<div data-card="${item.id}" data-context="inventory" class="card card-hover fade-up" style="${wrapStyle}">
+  <div style="height:4px;background:${tc.hex}"></div>
+  <div style="padding:16px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:14px">
+      <div>
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+          ${tonerDot(item.color,11)}
+          <span style="font-size:15px;font-weight:700;color:#1e293b">${item.name}</span>
+        </div>
+        <div style="font-size:11px;color:#94a3b8">${item.mk} · <span style="font-family:'JetBrains Mono',monospace">${item.part}</span></div>
+      </div>
+      ${badge(st)}
+    </div>
+    ${invBody}
+  </div></div>`;
+}
+
+// ─── GROUPED CARDS ────────────────────────────────────────────
+function renderGroupedCards(items,context){
+  context=context||'inventory';
+  if(!items.length)return`<div style="text-align:center;padding:60px;color:#94a3b8">
+    <div style="font-size:36px;margin-bottom:12px">📦</div>
+    <div style="font-size:14px;font-weight:500">ไม่พบรายการที่ตรงกับตัวกรอง</div>
+  </div>`;
+  const order=['Toshiba e-STUDIO 330AC (เครื่องเล็ก)','Toshiba e-STUDIO 2521AC (เครื่องใหญ่)'];
+  const grouped={};
+  items.forEach(i=>{if(!grouped[i.model])grouped[i.model]=[];grouped[i.model].push(i);});
+  const modelColors={'330AC':'#0891b2','2521AC':'#7c3aed'};
+  return order.filter(m=>grouped[m]).map(model=>{
+    const mk=grouped[model][0].mk;
+    const mc=modelColors[mk]||'#4f46e5';
+    const mItems=grouped[model];
+    const mSt=mItems.reduce((a,i)=>{const s=status(i);if(s==='OUT_OF_STOCK')a.out++;else if(s==='CRITICAL')a.crit++;else if(s==='LOW')a.low++;else a.ok++;return a;},{ok:0,low:0,crit:0,out:0});
+    return`<div style="margin-bottom:28px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid #f1f5f9">
+        <div style="width:6px;height:24px;border-radius:99px;background:${mc};flex-shrink:0"></div>
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#1e293b">${model}</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:2px">
+            ${mItems.length} รายการ
+            ${mSt.out?` · <span style="color:#64748b;font-weight:600">${mSt.out} หมดแล้ว</span>`:''}
+            ${mSt.crit?` · <span style="color:#dc2626;font-weight:600">${mSt.crit} วิกฤต</span>`:''}
+            ${mSt.low?` · <span style="color:#d97706;font-weight:600">${mSt.low} ใกล้หมด</span>`:''}
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:12px">
+        ${mItems.map((item,idx)=>renderCard(item,idx,context)).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── FILTER BAR ───────────────────────────────────────────────
+function renderFilters(items){
+  const count=f=>f==='ALL'?items.length:items.filter(i=>status(i)===f).length;
+  const tabs=[['ALL','ทั้งหมด'],['NORMAL','ปกติ'],['LOW','ใกล้หมด'],['CRITICAL','วิกฤต'],['OUT_OF_STOCK','หมดแล้ว']];
+  return`<div style="display:flex;gap:6px;flex-wrap:wrap">
+  ${tabs.map(([f,lb])=>{const active=S.filter===f;const cls=active?(f==='ALL'?'t-all':f==='NORMAL'?'t-normal':f==='LOW'?'t-low':f==='CRITICAL'?'t-critical':'t-empty'):'';
+  return`<button class="tab ${cls}" onclick="setFilter('${f}')">${lb} <span style="font-size:11px;opacity:.65">(${count(f)})</span></button>`}).join('')}
+  </div>`;
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────
+function renderDashboard(){
+  document.getElementById('header-title').innerHTML=`<div><div style="font-size:15px;font-weight:700;color:#1e293b">แดชบอร์ด</div><div style="font-size:11px;color:#94a3b8;margin-top:1px">ภาพรวมสต็อกหมึกพิมพ์</div></div>`;
+  let items=[...S.inventory];
+  if(S.filter!=='ALL')items=items.filter(i=>status(i)===S.filter);
+  if(S.search.trim()){const q=S.search.toLowerCase();items=items.filter(i=>i.name.toLowerCase().includes(q)||i.model.toLowerCase().includes(q)||i.color.toLowerCase().includes(q));}
+  const st=stats();
+  document.getElementById('content').innerHTML=`
+  <div style="padding:18px;max-width:1600px">
+    ${renderKPI(st)}
+    ${renderAlerts()?`<div style="margin-top:14px">${renderAlerts()}</div>`:''}
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0 12px;flex-wrap:wrap">
+      <div>
+        <span style="font-size:15px;font-weight:700;color:#1e293b">สถานะคลังหมึก</span>
+        <span style="font-size:12px;color:#94a3b8;margin-left:8px">แสดง ${items.length} จาก ${S.inventory.length} รายการ</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div style="position:relative">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8">${I.search}</span>
+          <input type="text" placeholder="ค้นหาหมึก, รุ่นเครื่อง…" value="${S.search}" oninput="setSearch(this.value)" style="padding-left:34px;width:180px"/>
+        </div>
+        ${renderFilters(S.inventory)}
+      </div>
+    </div>
+    ${renderGroupedCards(items,'dashboard')}
+  </div>`;
+}
+
+// ─── INVENTORY ────────────────────────────────────────────────
+function renderInventory(){
+  document.getElementById('header-title').innerHTML=`<div style="font-size:15px;font-weight:700;color:#1e293b">คลังหมึก</div>`;
+  let items=[...S.inventory];
+  if(S.filter!=='ALL')items=items.filter(i=>status(i)===S.filter);
+  if(S.search.trim()){const q=S.search.toLowerCase();items=items.filter(i=>i.name.toLowerCase().includes(q)||i.model.toLowerCase().includes(q)||i.loc?.toLowerCase().includes(q));}
+  document.getElementById('content').innerHTML=`
+  <div style="padding:18px;max-width:1600px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+      ${renderFilters(S.inventory)}
+      <div style="position:relative">
+        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8">${I.search}</span>
+        <input type="text" placeholder="ค้นหา…" value="${S.search}" oninput="setSearch(this.value)" style="padding-left:34px;width:160px"/>
+      </div>
+    </div>
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">แสดง ${items.length} จาก ${S.inventory.length} รายการ</div>
+    ${renderGroupedCards(items,'inventory')}
+  </div>`;
+}
+
+// ─── HISTORY ──────────────────────────────────────────────────
+function renderHistory(){
+  document.getElementById('header-title').innerHTML=`<div style="font-size:15px;font-weight:700;color:#1e293b">ประวัติการเปลี่ยนแปลง</div>`;
+  const perPage=20,start=(S.histPage-1)*perPage;
+  const recs=S.history.slice(start,start+perPage);
+  const totalPages=Math.ceil(S.history.length/perPage);
+  document.getElementById('content').innerHTML=`
+  <div style="padding:18px;max-width:1200px">
+    <div class="card fade-up" style="overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+      <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>เวลา</th><th>สินค้า</th><th>เครื่อง</th><th>ประเภท</th><th>เปลี่ยน</th><th>จำนวน</th><th>เหตุผล</th><th>ผู้แก้ไข</th>
+        </tr></thead>
+        <tbody>
+        ${recs.length===0?`<tr><td colspan="8" style="text-align:center;padding:50px;color:#94a3b8">ไม่มีประวัติการเปลี่ยนแปลง</td></tr>`:
+        recs.map(r=>{
+          const ct=CTC[r.ct]||CTC.DECREASE;const delta=r.nq-r.oq;
+          return`<tr>
+            <td class="mono" style="font-size:12px;color:#94a3b8;white-space:nowrap">${fmtDt(r.date)}</td>
+            <td><div style="display:flex;align-items:center;gap:6px">${tonerDot(r.color,8)}<span style="font-weight:600;color:#1e293b">${r.name}</span></div></td>
+            <td><span style="font-size:12px;padding:2px 8px;border-radius:6px;background:#f1f5f9;color:#64748b;font-weight:600">${r.mk}</span></td>
+            <td><span style="padding:3px 10px;border-radius:6px;font-size:12px;font-weight:700;background:${ct.bg};color:${ct.c}">${ct.label}</span></td>
+            <td class="mono" style="font-weight:800;font-size:15px;color:${delta>0?'#16a34a':delta<0?'#dc2626':'#64748b'}">${delta>0?'+':''}${delta}</td>
+            <td class="mono" style="color:#94a3b8">${r.oq} → ${r.nq}</td>
+            <td style="color:#475569;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.reason||'—'}</td>
+            <td style="color:#475569;white-space:nowrap">${r.user||'System'}</td>
+          </tr>`;}).join('')}
+        </tbody>
+      </table>
+      </div>
+    </div>
+    ${totalPages>1?`<div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+      <span style="font-size:12px;color:#94a3b8">หน้า ${S.histPage} จาก ${totalPages} · ทั้งหมด ${S.history.length} รายการ</span>
+      <div style="display:flex;gap:6px">
+        ${S.histPage>1?`<button class="tab" onclick="S.histPage--;renderContent()">← ก่อนหน้า</button>`:''}
+        ${S.histPage<totalPages?`<button class="tab" onclick="S.histPage++;renderContent()">ถัดไป →</button>`:''}
+      </div>
+    </div>`:''}
+  </div>`;
+}
+
+// ─── SETTINGS ─────────────────────────────────────────────────
+function renderSettings(){
+  document.getElementById('header-title').innerHTML=`<div style="font-size:15px;font-weight:700;color:#1e293b">ตั้งค่า</div>`;
+  const grouped={};
+  S.inventory.forEach(i=>{if(!grouped[i.model])grouped[i.model]=[];grouped[i.model].push(i);});
+  document.getElementById('content').innerHTML=`
+  <div style="padding:18px;max-width:900px">
+    ${Object.entries(grouped).map(([model,items])=>`
+    <div style="margin-bottom:24px">
+      <div style="font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+        <span style="width:4px;height:14px;border-radius:99px;background:#4f46e5;display:inline-block"></span>${model}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${items.map(item=>{const st=status(item);return`
+        <div class="card" style="padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <div style="display:flex;align-items:center;gap:10px;min-width:0">
+              ${tonerDot(item.color,12)}
+              <div>
+                <div style="font-size:14px;font-weight:700;color:#1e293b">${item.name}</div>
+                <div style="font-size:11px;color:#94a3b8;font-family:'JetBrains Mono',monospace;margin-top:1px">${item.part}</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+              ${badge(st)}
+              <button onclick="openSettings('${item.id}')" style="display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:9px;background:#f1f5f9;border:1px solid #e2e8f0;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#ede9fe';this.style.color='#4f46e5';this.style.borderColor='#c4b5fd'" onmouseout="this.style.background='#f1f5f9';this.style.color='#64748b';this.style.borderColor='#e2e8f0'">${I.cog} ตั้งค่า</button>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,80px) 1fr 1fr;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid #f8fafc">
+            ${[['วิกฤต',item.critical,'#dc2626'],['ขั้นต่ำ',item.min,'#d97706'],['สูงสุด',item.max,'#64748b'],['ปัจจุบัน',item.qty,SC[st].c]].map(([lb,v,c])=>`
+            <div><div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">${lb}</div><div style="font-size:20px;font-weight:800;color:${c}" class="mono">${v}</div></div>`).join('')}
+            ${item.loc?`<div style="display:flex;align-items:center;gap:4px;color:#94a3b8;font-size:12px;align-self:center">${I.map} ${item.loc}</div>`:'<div></div>'}
+            ${item.sup?`<div style="display:flex;align-items:center;gap:4px;color:#94a3b8;font-size:12px;overflow:hidden;align-self:center">${I.truck}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.sup}</span></div>`:'<div></div>'}
+          </div>
+        </div>`}).join('')}
+      </div>
+    </div>`).join('')}
+  </div>`;
+  // Admin: user management section
+  if(S.user?.role==='ADMIN'&&S.customUsers.length){
+    const el=document.getElementById('content');
+    let rows='';
+    S.customUsers.forEach(function(u,idx){
+      const roles=['STAFF','VIEWER','ADMIN'];
+      let opts='';
+      roles.forEach(function(r){opts+='<option value="'+r+'"'+(u.role===r?' selected':'')+'>'+r+'</option>';});
+      rows+='<tr>'
+        +'<td style="font-weight:600;color:#1e293b">'+u.fullName+'</td>'
+        +'<td style="font-family:\'JetBrains Mono\',monospace;font-size:12px">'+u.username+'</td>'
+        +'<td style="color:#64748b;font-size:12px">'+u.email+'</td>'
+        +'<td><select onchange="S.customUsers['+idx+'].role=this.value;save()" style="font-size:12px;padding:3px 6px;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;font-family:\'Sarabun\',sans-serif">'+opts+'</select></td>'
+        +'<td><button onclick="if(confirm(\'ลบผู้ใช้ '+u.fullName+'?\')){S.customUsers.splice('+idx+',1);save();renderSettings();}" style="font-size:11px;padding:3px 10px;border-radius:6px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;cursor:pointer;font-family:\'Sarabun\',sans-serif">ลบ</button></td>'
+        +'</tr>';
+    });
+    el.innerHTML+='<div style="padding:0 18px 18px;max-width:900px">'
+      +'<div class="card fade-up" style="padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04)">'
+      +'<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:14px">จัดการผู้ใช้ที่สมัครใหม่ ('+S.customUsers.length+' บัญชี)</div>'
+      +'<div style="overflow-x:auto"><table><thead><tr><th>ชื่อ-นามสกุล</th><th>ชื่อผู้ใช้</th><th>อีเมล</th><th>สิทธิ์</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+      +'</div></div>';
+  }
+}
+
+// ─── MODAL ────────────────────────────────────────────────────
+function renderModal(){
+  if(!S.settingsItem){document.getElementById('modal-root').innerHTML='';return;}
+  const item=S.inventory.find(i=>i.id===S.settingsItem);if(!item)return;
+  const tc=TC[item.color]||TC.BLACK;const st=status(item);
+  document.getElementById('modal-root').innerHTML=`
+  <div class="modal-bg" onclick="if(event.target===this)closeSettings()">
+    <div class="card fade-up" style="width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden">
+      <div style="height:4px;background:${tc.hex}"></div>
+      <div style="display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid #f1f5f9">
+        <div style="width:36px;height:36px;border-radius:10px;background:#f8fafc;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid ${tc.hex}">
+          ${tonerDot(item.color,14)}
+        </div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:700;color:#1e293b">${item.name}</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:1px">${item.model}</div>
+        </div>
+        ${badge(st)}
+        <button onclick="closeSettings()" class="icon-btn">${I.x}</button>
+      </div>
+      <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+        <div class="card-sm" style="padding:14px">
+          <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">เกณฑ์สต็อก</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+            ${[['crit','วิกฤต',item.critical,'#dc2626'],['min','ขั้นต่ำ',item.min,'#d97706'],['max','สูงสุด',item.max,'#16a34a']].map(([id,lb,v,c])=>`
+            <div>
+              <div style="font-size:12px;color:#64748b;font-weight:600;margin-bottom:6px">${lb}</div>
+              <input id="sf-${id}" type="number" min="0" value="${v}" style="font-size:16px;font-weight:700;text-align:center;color:${c}"/>
+            </div>`).join('')}
+          </div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:10px;text-align:center;background:#f8fafc;padding:6px;border-radius:8px">วิกฤต &lt; ขั้นต่ำ &lt; สูงสุด</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${[['loc','📍 ตำแหน่งจัดเก็บ',item.loc||'','เช่น Rack A-1'],['sup','🚚 ซัพพลายเออร์',item.sup||'','เช่น Toshiba Thailand'],['rem','📝 หมายเหตุ',item.remarks||'','บันทึกเพิ่มเติม']].map(([id,lb,v,ph])=>`
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">${lb}</label>
+            <input id="sf-${id}" type="text" value="${v}" placeholder="${ph}"/>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid #f1f5f9;background:#f8fafc">
+        <button onclick="closeSettings()" style="padding:10px 20px;border-radius:10px;background:#fff;border:1px solid #e2e8f0;color:#64748b;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'">ยกเลิก</button>
+        <button onclick="saveSettings()" style="padding:10px 22px;border-radius:10px;background:#4f46e5;border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;box-shadow:0 2px 8px rgba(79,70,229,.3)" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">บันทึก</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────
+function renderNotifPanel(){
+  const uc=unread();
+  document.getElementById('notif-root').innerHTML=`
+  <div class="notif-overlay" onclick="toggleNotif()"></div>
+  <div class="notif-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid #f1f5f9">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#1e293b">การแจ้งเตือน</div>
+        ${uc?`<div style="font-size:12px;color:#94a3b8;margin-top:2px">${uc} ยังไม่ได้อ่าน</div>`:''}
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        ${uc?`<button onclick="markAllRead()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;background:#f1f5f9;border:1px solid #e2e8f0;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#ede9fe';this.style.color='#4f46e5'" onmouseout="this.style.background='#f1f5f9';this.style.color='#64748b'">${I.check} อ่านทั้งหมด</button>`:''}
+        <button class="icon-btn" onclick="toggleNotif()">${I.x}</button>
+      </div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:10px">${renderNotifList()}</div>
+  </div>`;
+}
+function renderNotifList(){
+  const notifs=[...S.notifications].sort((a,b)=>({CRITICAL:0,WARNING:1,INFO:2}[a.type]-{CRITICAL:0,WARNING:1,INFO:2}[b.type]));
+  if(!notifs.length)return`<div style="text-align:center;padding:60px 20px;color:#94a3b8;font-size:14px">ไม่มีการแจ้งเตือน</div>`;
+  return notifs.map(n=>{const nc=NIC[n.type];return`
+  <div style="display:flex;gap:10px;padding:11px 12px;border-radius:10px;margin-bottom:5px;background:${n.read?'transparent':nc.bg};border:1px solid ${n.read?'transparent':nc.border};opacity:${n.read?.55:1};transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='${n.read?'transparent':nc.bg}'">
+    <span style="color:${nc.c};flex-shrink:0;margin-top:2px">${I[nc.icon]}</span>
+    <div style="min-width:0">
+      ${!n.read?`<span style="width:7px;height:7px;border-radius:50%;background:${nc.c};display:inline-block;margin-right:4px;vertical-align:middle"></span>`:''}
+      <span style="font-size:13px;font-weight:600;color:#1e293b">${n.title}</span>
+      <div style="font-size:12px;color:#64748b;margin-top:3px;line-height:1.5">${n.msg}</div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:5px">${ago(n.date)}</div>
+    </div>
+  </div>`}).join('');
+}
+
+// ─── MAIN ─────────────────────────────────────────────────────
+function renderContent(){
+  if(!S.user)return;
+  document.querySelectorAll('.sidebar-item').forEach(el=>{
+    el.classList.toggle('active',el.getAttribute('onclick')===`nav('${S.page}')`);
+  });
+  if(S.page==='dashboard')renderDashboard();
+  else if(S.page==='inventory')renderInventory();
+  else if(S.page==='history')renderHistory();
+  else if(S.page==='settings')renderSettings();
+}
+function render(){if(!S.user){renderLogin();return;}renderShell();renderContent();}
+try{load();render();}catch(e){document.getElementById('app').innerHTML='<div style="padding:30px;font-family:monospace;color:#dc2626;background:#fee2e2;margin:20px;border-radius:12px"><b>Error:</b> '+e.message+'<br><small>'+e.stack+'</small></div>';}
+</script>
+</body>
+</html>
