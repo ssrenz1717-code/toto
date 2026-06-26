@@ -125,25 +125,17 @@ function defNotifs(){return[
 ];}
 
 // ─── STATE ────────────────────────────────────────────────────
-const STORAGE_KEYS=['toner-v4','toner-v3'];
 let S={page:'login',mode:'login',user:null,sidebarOpen:true,notifOpen:false,filter:'ALL',search:'',settingsItem:null,showPass:false,showPass2:false,loginErr:'',regErr:'',regOk:'',regDraft:{u:'',fn:'',em:'',p:'',p2:''},inventory:[],history:[],notifications:[],histPage:1,customUsers:[]};
+let searchTimer=null;
+let searchComposing=false;
 
 function load(){
-  const raw=readStored();
-  if(raw){try{const p=JSON.parse(raw);S.inventory=p.inv||DEF_INV.map(x=>({...x}));S.history=p.hist||[...DEF_HIST];S.notifications=p.notifs||defNotifs();S.customUsers=p.cu||[];if(p.user){S.user=p.user;S.page='dashboard';}save();}catch(e){reset();}}
+  const raw=localStorage.getItem('toner-v3');
+  if(raw){try{const p=JSON.parse(raw);S.inventory=p.inv||DEF_INV.map(x=>({...x}));S.history=p.hist||[...DEF_HIST];S.notifications=p.notifs||defNotifs();S.customUsers=p.cu||[];if(p.user){S.user=p.user;S.page='dashboard';}}catch(e){reset();}}
   else reset();
 }
 function reset(){S.inventory=DEF_INV.map(x=>({...x}));S.history=[...DEF_HIST];S.notifications=defNotifs();S.customUsers=[];}
-function readStored(){
-  for(const k of STORAGE_KEYS){
-    try{const v=localStorage.getItem(k)||sessionStorage.getItem(k);if(v)return v;}catch(e){}
-  }
-  return null;
-}
-function save(){
-  const data=JSON.stringify({inv:S.inventory,hist:S.history,notifs:S.notifications,user:S.user,cu:S.customUsers,savedAt:new Date().toISOString()});
-  STORAGE_KEYS.forEach(k=>{try{localStorage.setItem(k,data);sessionStorage.setItem(k,data);}catch(e){}});
-}
+function save(){localStorage.setItem('toner-v3',JSON.stringify({inv:S.inventory,hist:S.history,notifs:S.notifications,user:S.user,cu:S.customUsers}));}
 
 // ─── UTILS ────────────────────────────────────────────────────
 function status(item){
@@ -171,6 +163,7 @@ function fmtDt(d){const dt=new Date(d);return dt.toLocaleDateString('th-TH',{day
 function uid(){return'x'+Math.random().toString(36).slice(2,9);}
 function unread(){return S.notifications.filter(n=>!n.read).length;}
 function isAdmin(){return S.user?.role==='ADMIN';}
+function canEditInventory(){return S.user?.role==='STAFF'||S.user?.role==='ADMIN';}
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function stats(){const v=S.inventory;return{total:v.length,normal:v.filter(i=>status(i)==='NORMAL').length,low:v.filter(i=>status(i)==='LOW').length,critical:v.filter(i=>status(i)==='CRITICAL').length,outOfStock:v.filter(i=>status(i)==='OUT_OF_STOCK').length,today:S.history.filter(h=>new Date(h.date)>new Date(new Date().setHours(0,0,0,0))).length};}
 function pct(qty,max){return max>0?Math.min(100,Math.round(qty/max*100)):0;}
@@ -183,6 +176,7 @@ function doLogin(){
   const p=document.getElementById('lp').value;
   const user=USERS.find(x=>x.username===u&&x.password===p)||S.customUsers.find(x=>x.username===u&&x.password===p);
   if(!user){S.loginErr='ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';S.mode='login';renderLogin();return;}
+  if(S.customUsers.includes(user))user.lastLogin=new Date().toISOString();
   S.user=user;S.page='dashboard';S.loginErr='';S.regOk='';save();render();
 }
 function doLogout(){S.user=null;S.page='login';S.mode='login';S.notifOpen=false;save();render();}
@@ -206,17 +200,40 @@ function doRegister(){
 }
 function nav(page){S.page=page;S.filter='ALL';S.search='';S.notifOpen=false;S.settingsItem=null;S.histPage=1;renderContent();}
 function setFilter(f){S.filter=f;renderContent();}
-function setSearch(v){S.search=v;renderContent();}
+function setSearch(v){
+  S.search=v;
+  if(searchComposing)return;
+  clearTimeout(searchTimer);
+  searchTimer=setTimeout(function(){
+    const active=document.activeElement;
+    const restoreFocus=active&&active.id==='search-input';
+    const selStart=restoreFocus?active.selectionStart:null;
+    const selEnd=restoreFocus?active.selectionEnd:null;
+    const content=document.getElementById('content');
+    const scrollTop=content?content.scrollTop:0;
+    const scrollLeft=content?content.scrollLeft:0;
+    const winX=window.scrollX||0;
+    const winY=window.scrollY||0;
+    renderContent();
+    const input=document.getElementById('search-input');
+    if(content){content.scrollTop=scrollTop;content.scrollLeft=scrollLeft;}
+    if(window.scrollTo)window.scrollTo(winX,winY);
+    if(restoreFocus&&input){
+      try{input.focus({preventScroll:true});}catch(e){input.focus();}
+      if(selStart!==null&&selEnd!==null)input.setSelectionRange(selStart,selEnd);
+    }
+  },180);
+}
 
 function changeQty(id,delta){
-  if(!isAdmin())return;
+  if(!canEditInventory())return;
   const item=S.inventory.find(i=>i.id===id);if(!item)return;
   const newQty=Math.max(0,item.qty+delta);
   if(Math.abs(delta)>=3||newQty===0){openReasonPrompt(id,delta);return;}
   applyQtyChange(id,newQty,delta>0?'เพิ่มด้วยตนเอง':'ลดด้วยตนเอง',delta>=0?'INCREASE':'DECREASE');
 }
 function applyQtyChange(id,newQty,reason,ct){
-  if(!isAdmin())return;
+  if(!canEditInventory())return;
   const item=S.inventory.find(i=>i.id===id);if(!item)return;
   const prev=status(item);const oq=item.qty;
   item.qty=Math.max(0,newQty);item.updatedAt=new Date().toISOString();
@@ -233,7 +250,7 @@ function applyQtyChange(id,newQty,reason,ct){
   if(nb){nb.textContent=unread()||'';nb.style.display=unread()?'flex':'none';}
 }
 function openReasonPrompt(id,delta){
-  if(!isAdmin())return;
+  if(!canEditInventory())return;
   const item=S.inventory.find(i=>i.id===id);if(!item)return;
   const newQty=Math.max(0,item.qty+delta);
   const tc=TC[item.color]||TC.BLACK;const isInc=delta>0;
@@ -257,7 +274,7 @@ function openReasonPrompt(id,delta){
   setTimeout(()=>document.getElementById('reason-input')?.focus(),50);
 }
 function confirmChangeQty(id,delta){
-  if(!isAdmin())return;
+  if(!canEditInventory())return;
   const reason=document.getElementById('reason-input')?.value.trim()||'';
   const item=S.inventory.find(i=>i.id===id);if(!item)return;
   const newQty=Math.max(0,item.qty+delta);
@@ -265,7 +282,7 @@ function confirmChangeQty(id,delta){
   applyQtyChange(id,newQty,reason||(delta>0?'เพิ่มด้วยตนเอง':'ลดด้วยตนเอง'),delta>=0?'INCREASE':'DECREASE');
 }
 function openQtyEdit(id){
-  if(!isAdmin())return;
+  if(!canEditInventory())return;
   const item=S.inventory.find(i=>i.id===id);if(!item)return;
   const tc=TC[item.color]||TC.BLACK;
   document.getElementById('modal-root').innerHTML=`
@@ -307,7 +324,7 @@ function openQtyEdit(id){
   setTimeout(()=>document.getElementById('qty-input')?.focus(),50);
 }
 function confirmQtyEdit(id){
-  if(!isAdmin())return;
+  if(!canEditInventory())return;
   const item=S.inventory.find(i=>i.id===id);if(!item)return;
   const newQty=parseInt(document.getElementById('qty-input')?.value);
   if(isNaN(newQty)||newQty<0){alert('กรุณาระบุจำนวนที่ถูกต้อง');return;}
@@ -512,7 +529,8 @@ function renderCard(item,idx,context){
   const st=status(item);const tc=TC[item.color]||TC.BLACK;
   const p=pct(item.qty,item.max);
   const pcol=st==='NORMAL'?'#22c55e':st==='LOW'?'#f59e0b':st==='CRITICAL'?'#ef4444':'#e2e8f0';
-  const canEdit=isAdmin();
+  const canEdit=canEditInventory();
+  const canEditSettings=isAdmin();
   const isEmpty=item.qty===0;
   const isDash=context==='dashboard';
 
@@ -577,7 +595,7 @@ function renderCard(item,idx,context){
     </div>
     ${locLine}
     <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid #f1f5f9">
-      <button class="icon-btn" onclick="openSettings('${item.id}')" title="ตั้งค่า">${I.cog}</button>
+      ${canEditSettings?`<button class="icon-btn" onclick="openSettings('${item.id}')" title="ตั้งค่า">${I.cog}</button>`:`<span style="width:34px;height:34px;display:inline-block"></span>`}
       <div style="display:flex;align-items:center;gap:8px">
         <button class="btn-use" onclick="changeQty('${item.id}',-1)" ${isEmpty?'disabled':''}>${I.minus} ใช้แล้ว</button>
         <button onclick="openQtyEdit('${item.id}')" class="mono" title="คลิกเพื่อตั้งค่าจำนวน" style="font-size:15px;font-weight:800;color:#1e293b;min-width:20px;text-align:center;background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:8px" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''">${item.qty}</button>
@@ -666,7 +684,7 @@ function renderDashboard(){
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <div style="position:relative">
           <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8">${I.search}</span>
-          <input type="text" placeholder="ค้นหาหมึก, รุ่นเครื่อง…" value="${S.search}" oninput="setSearch(this.value)" style="padding-left:34px;width:180px"/>
+          <input id="search-input" type="text" placeholder="ค้นหาหมึก, รุ่นเครื่อง…" value="${esc(S.search)}" oninput="setSearch(this.value)" style="padding-left:34px;width:180px"/>
         </div>
         ${renderFilters(S.inventory)}
       </div>
@@ -687,7 +705,7 @@ function renderInventory(){
       ${renderFilters(S.inventory)}
       <div style="position:relative">
         <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8">${I.search}</span>
-        <input type="text" placeholder="ค้นหา…" value="${S.search}" oninput="setSearch(this.value)" style="padding-left:34px;width:160px"/>
+        <input id="search-input" type="text" placeholder="ค้นหา…" value="${esc(S.search)}" oninput="setSearch(this.value)" style="padding-left:34px;width:160px"/>
       </div>
     </div>
     <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">แสดง ${items.length} จาก ${S.inventory.length} รายการ</div>
@@ -789,17 +807,18 @@ function renderSettings(){
         +'<td style="font-family:\'JetBrains Mono\',monospace;font-size:12px">'+esc(u.username)+'</td>'
         +'<td style="color:#64748b;font-size:12px">'+esc(u.email)+'</td>'
         +'<td style="color:#64748b;font-size:12px;white-space:nowrap">'+(u.createdAt?fmtDt(u.createdAt):'-')+'</td>'
+        +'<td style="color:#64748b;font-size:12px;white-space:nowrap">'+(u.lastLogin?fmtDt(u.lastLogin):'ยังไม่เคย')+'</td>'
         +'<td><select onchange="updateUserRole('+idx+',this.value)" style="font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;font-family:\'Sarabun\',sans-serif">'+opts+'</select></td>'
         +'<td><button onclick="deleteCustomUser('+idx+')" style="font-size:11px;padding:5px 10px;border-radius:6px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;cursor:pointer;font-family:\'Sarabun\',sans-serif">ลบ</button></td>'
         +'</tr>';
     });
     if(!rows){
-      rows='<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:22px">ยังไม่มีผู้ใช้สมัครใหม่</td></tr>';
+      rows='<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:22px">ยังไม่มีผู้ใช้สมัครใหม่</td></tr>';
     }
     el.innerHTML+='<div style="padding:0 18px 18px;max-width:900px">'
       +'<div class="card fade-up" style="padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04)">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px"><div><div style="font-size:15px;font-weight:700;color:#1e293b">ผู้ใช้ที่สมัครใหม่</div><div style="font-size:12px;color:#94a3b8;margin-top:2px">ตรวจสอบบัญชีและมอบสิทธิ์ให้ใช้งานระบบ</div></div><span style="font-size:12px;font-weight:700;color:#4f46e5;background:#ede9fe;border:1px solid #c4b5fd;border-radius:999px;padding:5px 10px">'+S.customUsers.length+' บัญชี</span></div>'
-      +'<div style="overflow-x:auto"><table><thead><tr><th>ชื่อ-นามสกุล</th><th>ชื่อผู้ใช้</th><th>อีเมล</th><th>สมัครเมื่อ</th><th>สิทธิ์</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px"><div><div style="font-size:15px;font-weight:700;color:#1e293b">ผู้ใช้ที่สมัครใหม่</div><div style="font-size:12px;color:#94a3b8;margin-top:2px">ดูรายชื่อคนที่สมัครเว็บนี้ และเปลี่ยน role ได้ที่ช่อง “สิทธิ์”</div></div><span style="font-size:12px;font-weight:700;color:#4f46e5;background:#ede9fe;border:1px solid #c4b5fd;border-radius:999px;padding:5px 10px">'+S.customUsers.length+' บัญชี</span></div>'
+      +'<div style="overflow-x:auto"><table><thead><tr><th>ชื่อ-นามสกุล</th><th>ชื่อผู้ใช้</th><th>อีเมล</th><th>สมัครเมื่อ</th><th>เข้าสู่ล่าสุด</th><th>สิทธิ์</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'
       +'</div></div>';
   }
 }
@@ -898,7 +917,12 @@ function renderContent(){
   else if(S.page==='settings')renderSettings();
 }
 function render(){if(!S.user){renderLogin();return;}renderShell();renderContent();}
-window.addEventListener('beforeunload',save);
+document.addEventListener('compositionstart',function(e){
+  if(e.target&&e.target.id==='search-input'){searchComposing=true;clearTimeout(searchTimer);}
+});
+document.addEventListener('compositionend',function(e){
+  if(e.target&&e.target.id==='search-input'){searchComposing=false;setSearch(e.target.value);}
+});
 try{load();render();}catch(e){document.getElementById('app').innerHTML='<div style="padding:30px;font-family:monospace;color:#dc2626;background:#fee2e2;margin:20px;border-radius:12px"><b>Error:</b> '+e.message+'<br><small>'+e.stack+'</small></div>';}
 </script>
 </body>
