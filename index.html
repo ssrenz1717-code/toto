@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 *::-webkit-scrollbar{width:5px;height:5px}
@@ -49,6 +50,7 @@ tr:hover td{background:#f8fafc}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
 @keyframes pulse-r{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
 .fade-up{animation:fadeUp .3s ease-out both}
 .pulse-r{animation:pulse-r 1.8s ease-in-out infinite}
 .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.35);backdrop-filter:blur(4px);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
@@ -61,6 +63,11 @@ tr:hover td{background:#f8fafc}
 <body>
 <div id="app"></div>
 <script>
+// ─── SUPABASE ────────────────────────────────────────────────
+const SUPABASE_URL='https://lmltfzyipuverhffzooy.supabase.co';
+const SUPABASE_KEY='sb_publishable_SsiOk-BBxN_zljuwT6uveA_-OBcfJa2';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
 // ─── ICONS ───────────────────────────────────────────────────
 const I={
   printer:`<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z"/></svg>`,
@@ -84,6 +91,7 @@ const I={
   eyeoff:`<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/></svg>`,
   map:`<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>`,
   truck:`<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/></svg>`,
+  users:`<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.75 9.75 0 009.152-5.223M5.7 15.45a8.965 8.965 0 01-3.575-5.22 9.753 9.753 0 009.563-2.233M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>`,
 };
 
 // ─── DATA ─────────────────────────────────────────────────────
@@ -124,18 +132,101 @@ function defNotifs(){return[
   {id:'n7',type:'INFO',title:'เติมสต็อกแล้ว — หมึกดำ (330AC)',msg:'หมึกดำ เครื่องเล็ก 330AC เติมสต็อกเรียบร้อย (5 → 6 กล่อง)',read:true,date:new Date(t-2*36e5).toISOString()},
 ];}
 
+// ─── DB MAPPING ───────────────────────────────────────────────
+// Expected Supabase columns:
+// inventory : id,name,model,mk,color,type,part,qty,min_stock,critical_stock,max_stock,loc,sup,remarks,updated_at
+// history   : id,iid,name,mk,color,oq,nq,ct,reason,changed_by,date
+// notifications: id,type,title,msg,is_read,date
+// users     : id,username,password,full_name,email,role,created_at,last_login
+// audit_logs: id,username,full_name,role,timestamp
+function mapInvFromDB(r){return{id:r.id,name:r.name,model:r.model,mk:r.mk,color:r.color,type:r.type,part:r.part,qty:r.qty,min:r.min_stock,critical:r.critical_stock,max:r.max_stock,loc:r.loc||'',sup:r.sup||'',remarks:r.remarks||'',updatedAt:r.updated_at};}
+function mapInvToDB(i){return{id:i.id,name:i.name,model:i.model,mk:i.mk,color:i.color,type:i.type,part:i.part,qty:i.qty,min_stock:i.min,critical_stock:i.critical,max_stock:i.max,loc:i.loc||null,sup:i.sup||null,remarks:i.remarks||null,updated_at:i.updatedAt||new Date().toISOString()};}
+function mapHistFromDB(r){return{id:r.id,iid:r.iid,name:r.name,mk:r.mk,color:r.color,oq:r.oq,nq:r.nq,ct:r.ct,reason:r.reason,user:r.changed_by,date:r.date};}
+function mapHistToDB(h){return{id:h.id,iid:h.iid,name:h.name,mk:h.mk,color:h.color,oq:h.oq,nq:h.nq,ct:h.ct,reason:h.reason||null,changed_by:h.user,date:h.date};}
+function mapNotifFromDB(r){return{id:r.id,type:r.type,title:r.title,msg:r.msg,read:r.is_read,date:r.date};}
+function mapNotifToDB(n){return{id:n.id,type:n.type,title:n.title,msg:n.msg,is_read:n.read,date:n.date};}
+function mapUserFromDB(r){return{id:r.id,username:r.username,password:r.password,fullName:r.full_name,email:r.email||'',role:r.role,createdAt:r.created_at,lastLogin:r.last_login};}
+function mapUserToDB(u){return{id:u.id,username:u.username,password:u.password,full_name:u.fullName,email:u.email||null,role:u.role,created_at:u.createdAt||new Date().toISOString(),last_login:u.lastLogin||null};}
+function mapAuditFromDB(r){return{id:r.id,username:r.username,fullName:r.full_name,role:r.role,timestamp:r.timestamp};}
+function mapAuditToDB(a){return{id:a.id,username:a.username,full_name:a.fullName,role:a.role,timestamp:a.timestamp};}
+
 // ─── STATE ────────────────────────────────────────────────────
-let S={page:'login',mode:'login',user:null,sidebarOpen:true,notifOpen:false,filter:'ALL',search:'',settingsItem:null,showPass:false,showPass2:false,loginErr:'',regErr:'',regOk:'',regDraft:{u:'',fn:'',em:'',p:'',p2:''},inventory:[],history:[],notifications:[],histPage:1,customUsers:[]};
+let S={page:'login',mode:'login',user:null,sidebarOpen:true,notifOpen:false,filter:'ALL',search:'',settingsItem:null,showPass:false,showPass2:false,loginErr:'',regErr:'',regOk:'',regDraft:{u:'',fn:'',em:'',p:'',p2:''},inventory:[],history:[],notifications:[],histPage:1,users:[],auditLogs:[],usersTab:'accounts'};
 let searchTimer=null;
 let searchComposing=false;
 
-function load(){
-  const raw=localStorage.getItem('toner-v3');
-  if(raw){try{const p=JSON.parse(raw);S.inventory=p.inv||DEF_INV.map(x=>({...x}));S.history=p.hist||[...DEF_HIST];S.notifications=p.notifs||defNotifs();S.customUsers=p.cu||[];if(p.user){S.user=p.user;S.page='dashboard';}}catch(e){reset();}}
-  else reset();
+function saveSession(){
+  if(S.user)localStorage.setItem('toner-session',JSON.stringify({id:S.user.id}));
+  else localStorage.removeItem('toner-session');
 }
-function reset(){S.inventory=DEF_INV.map(x=>({...x}));S.history=[...DEF_HIST];S.notifications=defNotifs();S.customUsers=[];}
-function save(){localStorage.setItem('toner-v3',JSON.stringify({inv:S.inventory,hist:S.history,notifs:S.notifications,user:S.user,cu:S.customUsers}));}
+function showToast(msg,type){
+  type=type||'error';
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 18px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.15);animation:fadeUp .3s ease-out;font-family:\'Sarabun\',sans-serif;max-width:300px;line-height:1.4;'+(type==='error'?'background:#fee2e2;color:#dc2626;border:1px solid #fca5a5':type==='ok'?'background:#dcfce7;color:#16a34a;border:1px solid #86efac':'background:#dbeafe;color:#2563eb;border:1px solid #93c5fd');
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(function(){t.remove();},300);},3500);
+}
+function showLoading(){
+  document.getElementById('app').innerHTML='<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#f0f4f8">'
+    +'<div style="width:44px;height:44px;border:3px solid #e2e8f0;border-top-color:#4f46e5;border-radius:50%;animation:spin .8s linear infinite"></div>'
+    +'<div style="font-size:14px;font-weight:600;color:#64748b;font-family:\'Sarabun\',sans-serif">กำลังโหลดข้อมูล…</div>'
+    +'</div>';
+}
+async function loadFromSupabase(){
+  const[invR,histR,notifR,usersR,auditR]=await Promise.all([
+    sb.from('inventory').select('*').order('mk').order('part'),
+    sb.from('history').select('*').order('date',{ascending:false}),
+    sb.from('notifications').select('*').order('date',{ascending:false}),
+    sb.from('users').select('*').order('created_at'),
+    sb.from('audit_logs').select('*').order('timestamp',{ascending:false}).limit(200),
+  ]);
+  if(invR.error)throw new Error('inventory: '+invR.error.message);
+  if(usersR.error)throw new Error('users: '+usersR.error.message);
+  S.inventory=(invR.data||[]).map(mapInvFromDB);
+  S.history=(histR.data||[]).map(mapHistFromDB);
+  S.notifications=(notifR.data||[]).map(mapNotifFromDB);
+  S.users=(usersR.data||[]).map(mapUserFromDB);
+  S.auditLogs=(auditR.data||[]).map(mapAuditFromDB);
+}
+async function seedIfEmpty(){
+  const now=new Date().toISOString();
+  if(S.users.length===0){
+    const{data,error}=await sb.from('users').insert(USERS.map(u=>mapUserToDB({...u,createdAt:now}))).select();
+    if(!error&&data)S.users=data.map(mapUserFromDB);
+  }
+  if(S.inventory.length===0){
+    const{data,error}=await sb.from('inventory').insert(DEF_INV.map(i=>mapInvToDB(i))).select();
+    if(!error&&data){
+      S.inventory=data.map(mapInvFromDB);
+      await sb.from('history').insert(DEF_HIST.map(h=>mapHistToDB(h)));
+      const{data:hd}=await sb.from('history').select('*').order('date',{ascending:false});
+      if(hd)S.history=hd.map(mapHistFromDB);
+      await sb.from('notifications').insert(defNotifs().map(n=>mapNotifToDB(n)));
+      const{data:nd}=await sb.from('notifications').select('*').order('date',{ascending:false});
+      if(nd)S.notifications=nd.map(mapNotifFromDB);
+    }
+  }
+}
+async function initApp(){
+  showLoading();
+  try{
+    await loadFromSupabase();
+    await seedIfEmpty();
+    const raw=localStorage.getItem('toner-session');
+    if(raw){
+      try{
+        const{id}=JSON.parse(raw);
+        const found=S.users.find(x=>x.id===id);
+        if(found){S.user=found;S.page='dashboard';}
+      }catch(e){}
+    }
+  }catch(e){
+    document.getElementById('app').innerHTML='<div style="padding:30px;font-family:monospace;color:#dc2626;background:#fee2e2;margin:20px;border-radius:12px;font-size:13px"><b>เชื่อมต่อ Supabase ไม่ได้</b><br><br>'+e.message+'<br><br><small>ตรวจสอบ SUPABASE_URL และ SUPABASE_KEY และ RLS policy</small></div>';
+    return;
+  }
+  render();
+}
 
 // ─── UTILS ────────────────────────────────────────────────────
 function status(item){
@@ -174,12 +265,18 @@ function badge(st){const c=SC[st];return`<span style="display:inline-flex;align-
 function doLogin(){
   const u=document.getElementById('lu').value.trim();
   const p=document.getElementById('lp').value;
-  const user=USERS.find(x=>x.username===u&&x.password===p)||S.customUsers.find(x=>x.username===u&&x.password===p);
+  const user=S.users.find(x=>x.username===u&&x.password===p);
   if(!user){S.loginErr='ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';S.mode='login';renderLogin();return;}
-  if(S.customUsers.includes(user))user.lastLogin=new Date().toISOString();
-  S.user=user;S.page='dashboard';S.loginErr='';S.regOk='';save();render();
+  user.lastLogin=new Date().toISOString();
+  sb.from('users').update({last_login:user.lastLogin}).eq('id',user.id);
+  const log={id:uid(),username:user.username,fullName:user.fullName,role:user.role,timestamp:new Date().toISOString()};
+  S.auditLogs.unshift(log);
+  if(S.auditLogs.length>200)S.auditLogs=S.auditLogs.slice(0,200);
+  sb.from('audit_logs').insert(mapAuditToDB(log));
+  S.user=user;S.page='dashboard';S.loginErr='';S.regOk='';
+  saveSession();render();
 }
-function doLogout(){S.user=null;S.page='login';S.mode='login';S.notifOpen=false;save();render();}
+function doLogout(){S.user=null;S.page='login';S.mode='login';S.notifOpen=false;saveSession();render();}
 function doRegister(){
   const u=document.getElementById('ru').value.trim();
   const fn=document.getElementById('rn').value.trim();
@@ -191,12 +288,15 @@ function doRegister(){
   if(p.length<6){S.regErr='รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';S.regDraft.p='';S.regDraft.p2='';renderLogin();return;}
   if(p!==p2){S.regErr='รหัสผ่านยืนยันไม่ตรงกัน';S.regDraft.p='';S.regDraft.p2='';renderLogin();return;}
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){S.regErr='รูปแบบอีเมลไม่ถูกต้อง';renderLogin();return;}
-  const all=[...USERS,...S.customUsers];
-  if(all.find(x=>x.username===u)){S.regErr='ชื่อผู้ใช้นี้ถูกใช้แล้ว';renderLogin();return;}
-  if(all.find(x=>x.email&&x.email===em)){S.regErr='อีเมลนี้ถูกใช้แล้ว';renderLogin();return;}
-  S.customUsers.push({id:'u'+Date.now(),username:u,fullName:fn,email:em,password:p,role:'VIEWER',createdAt:new Date().toISOString()});
+  if(S.users.find(x=>x.username===u)){S.regErr='ชื่อผู้ใช้นี้ถูกใช้แล้ว';renderLogin();return;}
+  if(S.users.find(x=>x.email&&x.email===em)){S.regErr='อีเมลนี้ถูกใช้แล้ว';renderLogin();return;}
+  const nu={id:'u'+Date.now(),username:u,fullName:fn,email:em,password:p,role:'VIEWER',createdAt:new Date().toISOString()};
+  S.users.push(nu);
   S.regErr='';S.regOk='สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบด้วยบัญชีใหม่';S.mode='login';S.regDraft={u:'',fn:'',em:'',p:'',p2:''};
-  save();renderLogin();
+  sb.from('users').insert(mapUserToDB(nu)).then(function(r){
+    if(r.error){S.users=S.users.filter(x=>x.id!==nu.id);showToast('สมัครไม่สำเร็จ: '+(r.error.code==='23505'?'ชื่อผู้ใช้หรืออีเมลนี้ถูกใช้แล้ว':r.error.message));}
+  });
+  renderLogin();
 }
 function nav(page){S.page=page;S.filter='ALL';S.search='';S.notifOpen=false;S.settingsItem=null;S.histPage=1;renderContent();}
 function setFilter(f){S.filter=f;renderContent();}
@@ -237,13 +337,18 @@ function applyQtyChange(id,newQty,reason,ct){
   const item=S.inventory.find(i=>i.id===id);if(!item)return;
   const prev=status(item);const oq=item.qty;
   item.qty=Math.max(0,newQty);item.updatedAt=new Date().toISOString();
-  S.history.unshift({id:uid(),iid:id,name:item.name,mk:item.mk,color:item.color,oq,nq:item.qty,ct:ct||'SET',reason,user:S.user?.fullName||'System',date:new Date().toISOString()});
+  const h={id:uid(),iid:id,name:item.name,mk:item.mk,color:item.color,oq,nq:item.qty,ct:ct||'SET',reason,user:S.user?.fullName||'System',date:new Date().toISOString()};
+  S.history.unshift(h);
   const nst=status(item);
+  let newNotif=null;
   if(nst!==prev){
     const nt=nst==='OUT_OF_STOCK'||nst==='CRITICAL'?'CRITICAL':'WARNING';
-    S.notifications.unshift({id:uid(),type:nt,read:false,date:new Date().toISOString(),title:`${SC[nst].label} — ${item.name} (${item.mk})`,msg:`${item.name} (${item.mk}) อยู่ที่ ${item.qty} กล่อง`});
+    newNotif={id:uid(),type:nt,read:false,date:new Date().toISOString(),title:SC[nst].label+' — '+item.name+' ('+item.mk+')',msg:item.name+' ('+item.mk+') อยู่ที่ '+item.qty+' กล่อง'};
+    S.notifications.unshift(newNotif);
   }
-  save();
+  sb.from('inventory').upsert(mapInvToDB(item)).then(function(r){if(r.error)showToast('บันทึก inventory ไม่สำเร็จ');});
+  sb.from('history').insert(mapHistToDB(h)).then(function(r){if(r.error)showToast('บันทึกประวัติไม่สำเร็จ');});
+  if(newNotif)sb.from('notifications').insert(mapNotifToDB(newNotif));
   const card=document.querySelector(`[data-card="${id}"]`);
   if(card){const ctx=card.dataset?.context||'inventory';card.outerHTML=renderCard(item,S.inventory.indexOf(item),ctx);}
   const nb=document.getElementById('notif-badge');
@@ -344,24 +449,30 @@ function saveSettings(){
   if(crit>=mn||mn>=mx){alert('วิกฤต < ขั้นต่ำ < สูงสุด (ต้องเรียงน้อยไปมาก)');return;}
   item.critical=crit;item.min=mn;item.max=mx;
   item.loc=g('loc')||item.loc;item.sup=g('sup')||item.sup;item.remarks=g('rem')||'';
-  save();closeSettings();renderContent();
+  sb.from('inventory').upsert(mapInvToDB(item)).then(function(r){if(r.error)showToast('บันทึกไม่สำเร็จ: '+r.error.message);else showToast('บันทึกการตั้งค่าแล้ว','ok');});
+  closeSettings();renderContent();
 }
-function markAllRead(){S.notifications.forEach(n=>n.read=true);save();renderNotifPanel();}
+function markAllRead(){S.notifications.forEach(n=>n.read=true);sb.from('notifications').update({is_read:true}).eq('is_read',false);renderNotifPanel();}
 function toggleNotif(){S.notifOpen=!S.notifOpen;if(S.notifOpen)renderNotifPanel();else document.getElementById('notif-root').innerHTML='';}
-function updateUserRole(idx,role){
-  if(!isAdmin()||!S.customUsers[idx])return;
-  S.customUsers[idx].role=role;
-  save();
-  renderSettings();
+function updateUserRole(userId,role){
+  if(!isAdmin())return;
+  const u=S.users.find(x=>x.id===userId);
+  if(!u||u.id===S.user?.id)return;
+  u.role=role;
+  sb.from('users').update({role}).eq('id',userId).then(function(r){if(r.error)showToast('อัปเดตสิทธิ์ไม่สำเร็จ');});
+  renderUsers();
 }
-function deleteCustomUser(idx){
-  if(!isAdmin()||!S.customUsers[idx])return;
-  if(confirm('ลบผู้ใช้ '+S.customUsers[idx].fullName+'?')){
-    S.customUsers.splice(idx,1);
-    save();
-    renderSettings();
+function deleteUser(userId){
+  if(!isAdmin())return;
+  const u=S.users.find(x=>x.id===userId);
+  if(!u||u.id===S.user?.id)return;
+  if(confirm('ลบผู้ใช้ '+u.fullName+' ออกจากระบบ?')){
+    S.users=S.users.filter(x=>x.id!==userId);
+    sb.from('users').delete().eq('id',userId).then(function(r){if(r.error)showToast('ลบผู้ใช้ไม่สำเร็จ');});
+    renderUsers();
   }
 }
+function setUsersTab(tab){S.usersTab=tab;renderUsers();}
 
 // ─── LOGIN / REGISTER ─────────────────────────────────────────
 function renderLogin(){
@@ -434,7 +545,8 @@ function renderShell(){
         <div style="overflow:hidden;white-space:nowrap;opacity:${S.sidebarOpen?1:0};transition:opacity .2s"><div style="font-size:14px;font-weight:700;color:#1e293b">TonerTrack</div><div style="font-size:10px;color:#94a3b8;margin-top:1px">สต็อกหมึกพิมพ์</div></div>
       </div>
       <nav style="flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:2px">
-        ${[['dashboard','home','แดชบอร์ด'],['inventory','cube','คลังหมึก'],['history','clock','ประวัติ'],['settings','cog','ตั้งค่า']].map(([pg,ic,lb])=>`
+        ${[['dashboard','home','แดชบอร์ด'],['inventory','cube','คลังหมึก'],['history','clock','ประวัติ'],['settings','cog','ตั้งค่า'],...(isAdmin()?[['users','users','จัดการผู้ใช้']]:[])]
+        .map(([pg,ic,lb])=>`
         <div class="sidebar-item${S.page===pg?' active':''}" onclick="nav('${pg}')" title="${lb}" style="white-space:nowrap">
           <span style="flex-shrink:0">${I[ic]}</span><span style="overflow:hidden;opacity:${S.sidebarOpen?1:0};transition:opacity .15s">${lb}</span>
         </div>`).join('')}
@@ -794,33 +906,64 @@ function renderSettings(){
       </div>
     </div>`).join('')}
   </div>`;
-  // Admin: user management section
-  if(S.user?.role==='ADMIN'){
-    const el=document.getElementById('content');
+}
+
+// ─── USERS (IAM) ──────────────────────────────────────────────
+function renderUsers(){
+  if(!isAdmin()){nav('dashboard');return;}
+  document.getElementById('header-title').innerHTML='<div><div style="font-size:15px;font-weight:700;color:#1e293b">จัดการผู้ใช้ระบบ</div><div style="font-size:11px;color:#94a3b8;margin-top:1px">Identity & Access Management</div></div>';
+  const tab=S.usersTab||'accounts';
+  const isAccounts=tab==='accounts';
+  let bodyHtml;
+  if(isAccounts){
     let rows='';
-    S.customUsers.forEach(function(u,idx){
-      const roles=['STAFF','VIEWER','ADMIN'];
+    S.users.forEach(function(u){
+      const isSelf=u.id===S.user?.id;
+      const roles=['ADMIN','STAFF','VIEWER'];
       let opts='';
       roles.forEach(function(r){opts+='<option value="'+r+'"'+(u.role===r?' selected':'')+'>'+r+'</option>';});
+      const roleCell=isSelf
+        ?'<td><span style="font-size:12px;padding:3px 10px;border-radius:6px;background:#ede9fe;color:#4f46e5;font-weight:700">'+esc(u.role)+'</span></td>'
+        :'<td><select onchange="updateUserRole(\''+u.id+'\',this.value)" style="font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;font-family:\'Sarabun\',sans-serif">'+opts+'</select></td>';
+      const delCell=isSelf
+        ?'<td><span style="font-size:11px;color:#94a3b8">บัญชีของคุณ</span></td>'
+        :'<td><button onclick="deleteUser(\''+u.id+'\')" style="font-size:11px;padding:5px 10px;border-radius:6px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;cursor:pointer;font-family:\'Sarabun\',sans-serif">ลบ</button></td>';
       rows+='<tr>'
-        +'<td style="font-weight:600;color:#1e293b">'+esc(u.fullName)+'</td>'
+        +'<td style="font-weight:600;color:#1e293b">'+esc(u.fullName)+(isSelf?' <span style="font-size:10px;padding:2px 6px;border-radius:99px;background:#ede9fe;color:#4f46e5;font-weight:700">คุณ</span>':'')+'</td>'
         +'<td style="font-family:\'JetBrains Mono\',monospace;font-size:12px">'+esc(u.username)+'</td>'
-        +'<td style="color:#64748b;font-size:12px">'+esc(u.email)+'</td>'
-        +'<td style="color:#64748b;font-size:12px;white-space:nowrap">'+(u.createdAt?fmtDt(u.createdAt):'-')+'</td>'
-        +'<td style="color:#64748b;font-size:12px;white-space:nowrap">'+(u.lastLogin?fmtDt(u.lastLogin):'ยังไม่เคย')+'</td>'
-        +'<td><select onchange="updateUserRole('+idx+',this.value)" style="font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;font-family:\'Sarabun\',sans-serif">'+opts+'</select></td>'
-        +'<td><button onclick="deleteCustomUser('+idx+')" style="font-size:11px;padding:5px 10px;border-radius:6px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;cursor:pointer;font-family:\'Sarabun\',sans-serif">ลบ</button></td>'
+        +'<td style="color:#64748b;font-size:12px">'+esc(u.email||'—')+'</td>'
+        +roleCell
+        +'<td style="color:#94a3b8;font-size:12px;white-space:nowrap">'+(u.createdAt?fmtDt(u.createdAt):'—')+'</td>'
+        +'<td style="color:#94a3b8;font-size:12px;white-space:nowrap">'+(u.lastLogin?fmtDt(u.lastLogin):'ยังไม่เคย')+'</td>'
+        +delCell+'</tr>';
+    });
+    if(!rows)rows='<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:30px">ไม่มีข้อมูลผู้ใช้</td></tr>';
+    bodyHtml='<div style="overflow-x:auto"><table><thead><tr><th>ชื่อ-นามสกุล</th><th>ชื่อผู้ใช้</th><th>อีเมล</th><th>สิทธิ์</th><th>สมัครเมื่อ</th><th>เข้าสู่ล่าสุด</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  } else {
+    let rows='';
+    S.auditLogs.forEach(function(log){
+      const roleColor=log.role==='ADMIN'?'#4f46e5':log.role==='STAFF'?'#0891b2':'#64748b';
+      const roleBg=log.role==='ADMIN'?'#ede9fe':log.role==='STAFF'?'#cffafe':'#f1f5f9';
+      rows+='<tr>'
+        +'<td class="mono" style="font-size:12px;color:#94a3b8;white-space:nowrap">'+fmtDt(log.timestamp)+'</td>'
+        +'<td style="font-weight:600;color:#1e293b">'+esc(log.fullName)+'</td>'
+        +'<td style="font-family:\'JetBrains Mono\',monospace;font-size:12px">'+esc(log.username)+'</td>'
+        +'<td><span style="font-size:11px;padding:3px 10px;border-radius:6px;background:'+roleBg+';color:'+roleColor+';font-weight:700">'+esc(log.role)+'</span></td>'
         +'</tr>';
     });
-    if(!rows){
-      rows='<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:22px">ยังไม่มีผู้ใช้สมัครใหม่</td></tr>';
-    }
-    el.innerHTML+='<div style="padding:0 18px 18px;max-width:900px">'
-      +'<div class="card fade-up" style="padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04)">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px"><div><div style="font-size:15px;font-weight:700;color:#1e293b">ผู้ใช้ที่สมัครใหม่</div><div style="font-size:12px;color:#94a3b8;margin-top:2px">ดูรายชื่อคนที่สมัครเว็บนี้ และเปลี่ยน role ได้ที่ช่อง “สิทธิ์”</div></div><span style="font-size:12px;font-weight:700;color:#4f46e5;background:#ede9fe;border:1px solid #c4b5fd;border-radius:999px;padding:5px 10px">'+S.customUsers.length+' บัญชี</span></div>'
-      +'<div style="overflow-x:auto"><table><thead><tr><th>ชื่อ-นามสกุล</th><th>ชื่อผู้ใช้</th><th>อีเมล</th><th>สมัครเมื่อ</th><th>เข้าสู่ล่าสุด</th><th>สิทธิ์</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'
-      +'</div></div>';
+    if(!rows)rows='<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:30px">ยังไม่มีประวัติการเข้าสู่ระบบ</td></tr>';
+    bodyHtml='<div style="overflow-x:auto"><table><thead><tr><th>เวลา</th><th>ชื่อ-นามสกุล</th><th>ชื่อผู้ใช้</th><th>สิทธิ์</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   }
+  document.getElementById('content').innerHTML='<div style="padding:18px;max-width:1000px">'
+    +'<div class="card fade-up" style="overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid #f1f5f9;flex-wrap:wrap;gap:10px">'
+    +'<div style="display:flex;gap:6px">'
+    +'<button class="tab'+(isAccounts?' t-all':'')+'" onclick="setUsersTab(\'accounts\')">บัญชีทั้งหมด <span style="font-size:11px;opacity:.65">('+S.users.length+')</span></button>'
+    +'<button class="tab'+(!isAccounts?' t-all':'')+'" onclick="setUsersTab(\'audit\')">ประวัติการเข้าสู่ระบบ <span style="font-size:11px;opacity:.65">('+S.auditLogs.length+')</span></button>'
+    +'</div>'
+    +'</div>'
+    +bodyHtml
+    +'</div></div>';
 }
 
 // ─── MODAL ────────────────────────────────────────────────────
@@ -915,6 +1058,7 @@ function renderContent(){
   else if(S.page==='inventory')renderInventory();
   else if(S.page==='history')renderHistory();
   else if(S.page==='settings')renderSettings();
+  else if(S.page==='users')renderUsers();
 }
 function render(){if(!S.user){renderLogin();return;}renderShell();renderContent();}
 document.addEventListener('compositionstart',function(e){
@@ -923,7 +1067,7 @@ document.addEventListener('compositionstart',function(e){
 document.addEventListener('compositionend',function(e){
   if(e.target&&e.target.id==='search-input'){searchComposing=false;setSearch(e.target.value);}
 });
-try{load();render();}catch(e){document.getElementById('app').innerHTML='<div style="padding:30px;font-family:monospace;color:#dc2626;background:#fee2e2;margin:20px;border-radius:12px"><b>Error:</b> '+e.message+'<br><small>'+e.stack+'</small></div>';}
+initApp();
 </script>
 </body>
 </html>
