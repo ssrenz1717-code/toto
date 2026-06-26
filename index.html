@@ -125,7 +125,7 @@ function defNotifs(){return[
 ];}
 
 // ─── STATE ────────────────────────────────────────────────────
-let S={page:'login',mode:'login',user:null,sidebarOpen:true,notifOpen:false,filter:'ALL',search:'',settingsItem:null,showPass:false,showPass2:false,loginErr:'',regErr:'',regOk:'',inventory:[],history:[],notifications:[],histPage:1,customUsers:[]};
+let S={page:'login',mode:'login',user:null,sidebarOpen:true,notifOpen:false,filter:'ALL',search:'',settingsItem:null,showPass:false,showPass2:false,loginErr:'',regErr:'',regOk:'',regDraft:{u:'',fn:'',em:'',p:'',p2:''},inventory:[],history:[],notifications:[],histPage:1,customUsers:[]};
 
 function load(){
   const raw=localStorage.getItem('toner-v3');
@@ -160,6 +160,8 @@ function ago(d){const s=Math.floor((Date.now()-new Date(d))/1000);if(s<60)return
 function fmtDt(d){const dt=new Date(d);return dt.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'2-digit'})+' '+dt.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});}
 function uid(){return'x'+Math.random().toString(36).slice(2,9);}
 function unread(){return S.notifications.filter(n=>!n.read).length;}
+function isAdmin(){return S.user?.role==='ADMIN';}
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function stats(){const v=S.inventory;return{total:v.length,normal:v.filter(i=>status(i)==='NORMAL').length,low:v.filter(i=>status(i)==='LOW').length,critical:v.filter(i=>status(i)==='CRITICAL').length,outOfStock:v.filter(i=>status(i)==='OUT_OF_STOCK').length,today:S.history.filter(h=>new Date(h.date)>new Date(new Date().setHours(0,0,0,0))).length};}
 function pct(qty,max){return max>0?Math.min(100,Math.round(qty/max*100)):0;}
 function tonerDot(color,size=10){const tc=TC[color]||TC.BLACK;return`<span style="width:${size}px;height:${size}px;border-radius:50%;background:${tc.hex};display:inline-block;flex-shrink:0"></span>`;}
@@ -173,22 +175,23 @@ function doLogin(){
   if(!user){S.loginErr='ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';S.mode='login';renderLogin();return;}
   S.user=user;S.page='dashboard';S.loginErr='';S.regOk='';save();render();
 }
-function doLogout(){S.user=null;S.page='login';S.mode='login';S.notifOpen=false;localStorage.removeItem('toner-v3');render();}
+function doLogout(){S.user=null;S.page='login';S.mode='login';S.notifOpen=false;save();render();}
 function doRegister(){
   const u=document.getElementById('ru').value.trim();
   const fn=document.getElementById('rn').value.trim();
   const em=document.getElementById('re').value.trim().toLowerCase();
   const p=document.getElementById('rp').value;
   const p2=document.getElementById('rp2').value;
+  S.regDraft={u,fn,em,p,p2};
   if(!u||!fn||!em||!p){S.regErr='กรุณากรอกข้อมูลให้ครบทุกช่อง';renderLogin();return;}
-  if(p.length<6){S.regErr='รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';renderLogin();return;}
-  if(p!==p2){S.regErr='รหัสผ่านยืนยันไม่ตรงกัน';renderLogin();return;}
+  if(p.length<6){S.regErr='รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';S.regDraft.p='';S.regDraft.p2='';renderLogin();return;}
+  if(p!==p2){S.regErr='รหัสผ่านยืนยันไม่ตรงกัน';S.regDraft.p='';S.regDraft.p2='';renderLogin();return;}
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){S.regErr='รูปแบบอีเมลไม่ถูกต้อง';renderLogin();return;}
   const all=[...USERS,...S.customUsers];
   if(all.find(x=>x.username===u)){S.regErr='ชื่อผู้ใช้นี้ถูกใช้แล้ว';renderLogin();return;}
   if(all.find(x=>x.email&&x.email===em)){S.regErr='อีเมลนี้ถูกใช้แล้ว';renderLogin();return;}
-  S.customUsers.push({id:'u'+Date.now(),username:u,fullName:fn,email:em,password:p,role:'STAFF',createdAt:new Date().toISOString()});
-  S.regErr='';S.regOk='สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบด้วยบัญชีใหม่';S.mode='login';
+  S.customUsers.push({id:'u'+Date.now(),username:u,fullName:fn,email:em,password:p,role:'VIEWER',createdAt:new Date().toISOString()});
+  S.regErr='';S.regOk='สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบด้วยบัญชีใหม่';S.mode='login';S.regDraft={u:'',fn:'',em:'',p:'',p2:''};
   save();renderLogin();
 }
 function nav(page){S.page=page;S.filter='ALL';S.search='';S.notifOpen=false;S.settingsItem=null;S.histPage=1;renderContent();}
@@ -196,12 +199,14 @@ function setFilter(f){S.filter=f;renderContent();}
 function setSearch(v){S.search=v;renderContent();}
 
 function changeQty(id,delta){
+  if(!isAdmin())return;
   const item=S.inventory.find(i=>i.id===id);if(!item)return;
   const newQty=Math.max(0,item.qty+delta);
   if(Math.abs(delta)>=3||newQty===0){openReasonPrompt(id,delta);return;}
   applyQtyChange(id,newQty,delta>0?'เพิ่มด้วยตนเอง':'ลดด้วยตนเอง',delta>=0?'INCREASE':'DECREASE');
 }
 function applyQtyChange(id,newQty,reason,ct){
+  if(!isAdmin())return;
   const item=S.inventory.find(i=>i.id===id);if(!item)return;
   const prev=status(item);const oq=item.qty;
   item.qty=Math.max(0,newQty);item.updatedAt=new Date().toISOString();
@@ -218,6 +223,7 @@ function applyQtyChange(id,newQty,reason,ct){
   if(nb){nb.textContent=unread()||'';nb.style.display=unread()?'flex':'none';}
 }
 function openReasonPrompt(id,delta){
+  if(!isAdmin())return;
   const item=S.inventory.find(i=>i.id===id);if(!item)return;
   const newQty=Math.max(0,item.qty+delta);
   const tc=TC[item.color]||TC.BLACK;const isInc=delta>0;
@@ -241,6 +247,7 @@ function openReasonPrompt(id,delta){
   setTimeout(()=>document.getElementById('reason-input')?.focus(),50);
 }
 function confirmChangeQty(id,delta){
+  if(!isAdmin())return;
   const reason=document.getElementById('reason-input')?.value.trim()||'';
   const item=S.inventory.find(i=>i.id===id);if(!item)return;
   const newQty=Math.max(0,item.qty+delta);
@@ -248,7 +255,7 @@ function confirmChangeQty(id,delta){
   applyQtyChange(id,newQty,reason||(delta>0?'เพิ่มด้วยตนเอง':'ลดด้วยตนเอง'),delta>=0?'INCREASE':'DECREASE');
 }
 function openQtyEdit(id){
-  if(S.user?.role==='VIEWER')return;
+  if(!isAdmin())return;
   const item=S.inventory.find(i=>i.id===id);if(!item)return;
   const tc=TC[item.color]||TC.BLACK;
   document.getElementById('modal-root').innerHTML=`
@@ -290,6 +297,7 @@ function openQtyEdit(id){
   setTimeout(()=>document.getElementById('qty-input')?.focus(),50);
 }
 function confirmQtyEdit(id){
+  if(!isAdmin())return;
   const item=S.inventory.find(i=>i.id===id);if(!item)return;
   const newQty=parseInt(document.getElementById('qty-input')?.value);
   if(isNaN(newQty)||newQty<0){alert('กรุณาระบุจำนวนที่ถูกต้อง');return;}
@@ -299,9 +307,10 @@ function confirmQtyEdit(id){
   applyQtyChange(id,newQty,reason,delta>0?'INCREASE':delta<0?'DECREASE':'SET');
 }
 function closeModal(){document.getElementById('modal-root').innerHTML='';S.settingsItem=null;}
-function openSettings(id){S.settingsItem=id;renderModal();}
+function openSettings(id){if(!isAdmin())return;S.settingsItem=id;renderModal();}
 function closeSettings(){closeModal();}
 function saveSettings(){
+  if(!isAdmin())return;
   const id=S.settingsItem;const item=S.inventory.find(i=>i.id===id);if(!item)return;
   const g=k=>document.getElementById('sf-'+k)?.value;
   const crit=parseInt(g('crit'))||0,mn=parseInt(g('min'))||0,mx=parseInt(g('max'))||1;
@@ -316,6 +325,7 @@ function toggleNotif(){S.notifOpen=!S.notifOpen;if(S.notifOpen)renderNotifPanel(
 // ─── LOGIN / REGISTER ─────────────────────────────────────────
 function renderLogin(){
   const isReg=S.mode==='register';
+  const d=S.regDraft||{u:'',fn:'',em:'',p:'',p2:''};
   const errHtml=isReg&&S.regErr?'<div style="font-size:13px;color:#dc2626;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;font-weight:500">'+S.regErr+'</div>':'';
   const okHtml=!isReg&&S.regOk?'<div style="font-size:13px;color:#16a34a;background:#dcfce7;border:1px solid #86efac;border-radius:10px;padding:10px 14px;font-weight:500">'+S.regOk+'</div>':'';
   const loginErrHtml=!isReg&&S.loginErr?'<div style="font-size:13px;color:#dc2626;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;font-weight:500">'+S.loginErr+'</div>':'';
@@ -326,18 +336,18 @@ function renderLogin(){
   if(isReg){
     formHtml='<div style="display:flex;flex-direction:column;gap:12px">'
       +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px">ชื่อผู้ใช้ <span style="color:#ef4444">*</span></label>'
-      +'<input id="ru" type="text" placeholder="ตัวอักษรภาษาอังกฤษ ตัวเลข" autocomplete="username" onkeydown="if(event.key===\'Enter\')document.getElementById(\'rn\').focus()"/></div>'
+      +'<input id="ru" type="text" value="'+esc(d.u)+'" placeholder="ตัวอักษรภาษาอังกฤษ ตัวเลข" autocomplete="username" oninput="S.regDraft.u=this.value" onkeydown="if(event.key===\'Enter\')document.getElementById(\'rn\').focus()"/></div>'
       +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px">ชื่อ-นามสกุล <span style="color:#ef4444">*</span></label>'
-      +'<input id="rn" type="text" placeholder="ชื่อที่แสดงในระบบ" onkeydown="if(event.key===\'Enter\')document.getElementById(\'re\').focus()"/></div>'
+      +'<input id="rn" type="text" value="'+esc(d.fn)+'" placeholder="ชื่อที่แสดงในระบบ" oninput="S.regDraft.fn=this.value" onkeydown="if(event.key===\'Enter\')document.getElementById(\'re\').focus()"/></div>'
       +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px">อีเมล <span style="color:#ef4444">*</span></label>'
-      +'<input id="re" type="email" placeholder="example@company.com" onkeydown="if(event.key===\'Enter\')document.getElementById(\'rp\').focus()"/></div>'
+      +'<input id="re" type="email" value="'+esc(d.em)+'" placeholder="example@company.com" oninput="S.regDraft.em=this.value" onkeydown="if(event.key===\'Enter\')document.getElementById(\'rp\').focus()"/></div>'
       +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px">รหัสผ่าน <span style="color:#ef4444">*</span></label>'
-      +'<div style="position:relative"><input id="rp" type="'+(S.showPass?'text':'password')+'" placeholder="อย่างน้อย 6 ตัวอักษร" style="padding-right:40px" onkeydown="if(event.key===\'Enter\')document.getElementById(\'rp2\').focus()"/>'+eyeBtn+'</div></div>'
+      +'<div style="position:relative"><input id="rp" type="'+(S.showPass?'text':'password')+'" value="'+esc(d.p)+'" placeholder="อย่างน้อย 6 ตัวอักษร" style="padding-right:40px" oninput="S.regDraft.p=this.value" onkeydown="if(event.key===\'Enter\')document.getElementById(\'rp2\').focus()"/>'+eyeBtn+'</div></div>'
       +'<div><label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px">ยืนยันรหัสผ่าน <span style="color:#ef4444">*</span></label>'
-      +'<div style="position:relative"><input id="rp2" type="'+(S.showPass2?'text':'password')+'" placeholder="กรอกรหัสผ่านอีกครั้ง" style="padding-right:40px" onkeydown="if(event.key===\'Enter\')doRegister()"/>'+eyeBtn2+'</div></div>'
+      +'<div style="position:relative"><input id="rp2" type="'+(S.showPass2?'text':'password')+'" value="'+esc(d.p2)+'" placeholder="กรอกรหัสผ่านอีกครั้ง" style="padding-right:40px" oninput="S.regDraft.p2=this.value" onkeydown="if(event.key===\'Enter\')doRegister()"/>'+eyeBtn2+'</div></div>'
       +errHtml
       +'<button onclick="doRegister()" style="width:100%;padding:12px;border-radius:12px;background:#4f46e5;color:#fff;font-size:15px;font-weight:700;cursor:pointer;border:none;margin-top:2px;box-shadow:0 4px 12px rgba(79,70,229,.3);font-family:\'Sarabun\',sans-serif" onmouseover="this.style.background=\'#4338ca\'" onmouseout="this.style.background=\'#4f46e5\'">สมัครสมาชิก</button>'
-      +'<div style="font-size:12px;color:#94a3b8;background:#f8fafc;border-radius:8px;padding:8px 12px">บัญชีใหม่จะได้รับสิทธิ์ Staff สามารถขอ Admin ได้ภายหลัง</div>'
+      +'<div style="font-size:12px;color:#94a3b8;background:#f8fafc;border-radius:8px;padding:8px 12px">บัญชีใหม่จะเป็นผู้ชมก่อน หากต้องการแก้สต็อกให้ Admin ปรับสิทธิ์ให้</div>'
       +'</div>';
   } else {
     formHtml='<div style="display:flex;flex-direction:column;gap:14px">'
@@ -478,7 +488,7 @@ function renderCard(item,idx,context){
   const st=status(item);const tc=TC[item.color]||TC.BLACK;
   const p=pct(item.qty,item.max);
   const pcol=st==='NORMAL'?'#22c55e':st==='LOW'?'#f59e0b':st==='CRITICAL'?'#ef4444':'#e2e8f0';
-  const isViewer=S.user?.role==='VIEWER';
+  const canEdit=isAdmin();
   const isEmpty=item.qty===0;
   const isDash=context==='dashboard';
 
@@ -494,12 +504,12 @@ function renderCard(item,idx,context){
 
   // ── Dashboard card: minimal ───────────────────────────────
   if(isDash){
-    const dashActions=isViewer?'':`
+    const dashActions=canEdit?`
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding-top:10px;border-top:1px solid #f1f5f9">
       <button class="btn-use" onclick="changeQty('${item.id}',-1)" ${isEmpty?'disabled':''} style="padding:7px 12px;font-size:12px">${I.minus} ใช้แล้ว</button>
       <button onclick="openQtyEdit('${item.id}')" class="mono" style="font-size:14px;font-weight:800;color:#1e293b;min-width:22px;text-align:center;background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:8px" title="คลิกเพื่อตั้งค่าจำนวน" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''">${item.qty}</button>
       <button class="btn-add" onclick="changeQty('${item.id}',1)" style="padding:7px 12px;font-size:12px">${I.plus} เติม</button>
-    </div>`;
+    </div>`:'';
     return`<div data-card="${item.id}" data-context="dashboard" class="card card-hover fade-up" style="${wrapStyle}">
   <div style="height:4px;background:${tc.hex}"></div>
   <div style="padding:14px 16px">
@@ -510,7 +520,7 @@ function renderCard(item,idx,context){
       </div>
       ${badge(st)}
     </div>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:${isViewer?0:10}px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:${canEdit?10:0}px">
       <div style="text-align:center;min-width:54px">
         <div class="mono" style="font-size:${isEmpty?36:44}px;font-weight:800;line-height:1;color:${qtyColor}">${item.qty}</div>
         <div style="font-size:10px;color:#94a3b8;margin-top:2px">${qtyLabel}</div>
@@ -521,7 +531,7 @@ function renderCard(item,idx,context){
   </div></div>`;}
 
   // ── Inventory card: full ──────────────────────────────────
-  const invBody=isViewer?`
+  const invBody=!canEdit?`
     <div style="text-align:center;padding:8px 0 14px">
       <div class="mono" style="font-size:${isEmpty?52:64}px;font-weight:800;line-height:1;color:${qtyColor}">${item.qty}</div>
       <div style="font-size:12px;color:#94a3b8;margin-top:6px;font-weight:600;text-transform:uppercase;letter-spacing:.06em">${qtyLabel}</div>
