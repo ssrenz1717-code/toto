@@ -125,6 +125,14 @@ body.compact th{padding:8px 10px;font-size:10px}
 body.compact td{padding:8px 10px;font-size:12px}
 body.compact input,body.compact select,body.compact textarea{font-size:13px;padding:7px 10px}
 @media(max-width:768px){.notif-panel{width:100vw!important}}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+@media(max-width:768px){
+  .kpi-grid{display:flex;flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;gap:12px;-webkit-overflow-scrolling:touch}
+  .kpi-grid::-webkit-scrollbar{display:none}
+  .kpi-grid>.card{flex:0 0 145px;scroll-snap-align:start}
+}
+.card-hover{transition:box-shadow .15s,transform .1s}
+.card-hover:hover{box-shadow:0 4px 16px rgba(0,0,0,.1)!important;transform:translateY(-1px)}
 #sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(2px);z-index:40;display:none}
 @media(max-width:768px){
   #sidebar{position:fixed!important;top:0!important;left:0!important;height:100vh!important;width:260px!important;transform:translateX(-100%);transition:transform .25s ease!important;z-index:50!important}
@@ -588,7 +596,7 @@ function confirmQtyEdit(id){
   applyQtyChange(id,newQty,reason,delta>0?'INCREASE':delta<0?'DECREASE':'SET');
 }
 function closeModal(){document.getElementById('modal-root').innerHTML='';S.settingsItem=null;}
-function openSettings(id){if(!isAdmin())return;S.settingsItem=id;renderModal();}
+function openSettings(id){if(!isAdmin()){showToast('ต้องใช้สิทธิ์ Admin เพื่อตั้งค่า','error');return;}S.settingsItem=id;renderModal();}
 function closeSettings(){closeModal();}
 function saveSettings(){
   if(!isAdmin())return;
@@ -867,7 +875,7 @@ function renderKPI(st){
     {label:'หมดแล้ว',val:st.outOfStock,c:'#64748b',bg:'#f1f5f9',border:'#cbd5e1'},
     {label:'อัปเดตวันนี้',val:st.today,c:'#0891b2',bg:'#cffafe',border:'#67e8f9'},
   ];
-  return`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">
+  return`<div class="kpi-grid">
   ${cards.map((c,i)=>`
   <div class="card fade-up" style="padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04);animation-delay:${i*40}ms">
     <div style="font-size:12px;color:var(--text-faint);font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">${c.label}</div>
@@ -1158,7 +1166,7 @@ function renderSettings(){
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
         ${items.map(item=>{const st=status(item);return`
-        <div class="card" style="padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+        <div class="card card-hover" style="padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04);cursor:pointer;" onclick="openSettings('${item.id}')">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
             <div style="display:flex;align-items:center;gap:10px;min-width:0">
               ${tonerDot(item.color,12)}
@@ -1169,14 +1177,14 @@ function renderSettings(){
             </div>
             <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
               ${badge(st)}
-              ${canEdit?`<button onclick="openSettings('${item.id}')" style="display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:9px;background:var(--surface3);border:1px solid var(--border);color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#ede9fe';this.style.color='#4f46e5';this.style.borderColor='#c4b5fd'" onmouseout="this.style.background='var(--surface3)';this.style.color='var(--text-muted)';this.style.borderColor='var(--border)'">${I.cog} ตั้งค่า</button>`:`<span style="font-size:12px;color:var(--text-faint)">ดูอย่างเดียว</span>`}
+              ${canEdit?`<span style="display:flex;align-items:center;color:var(--text-faint)">${I.cog}</span>`:`<span style="font-size:12px;color:var(--text-faint)">ดูอย่างเดียว</span>`}
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(4,80px) 1fr 1fr;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid var(--surface2)">
+          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--surface2)">
             ${[['วิกฤต',item.critical,'#dc2626'],['ขั้นต่ำ',item.min,'#d97706'],['สูงสุด',item.max,'#64748b'],['ปัจจุบัน',item.qty,SC[st].c]].map(([lb,v,c])=>`
-            <div><div style="font-size:10px;color:var(--text-faint);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">${lb}</div><div style="font-size:20px;font-weight:800;color:${c}" class="mono">${v}</div></div>`).join('')}
-            ${item.loc?`<div style="display:flex;align-items:center;gap:4px;color:var(--text-faint);font-size:12px;align-self:center">${I.map} ${item.loc}</div>`:'<div></div>'}
-            ${item.sup?`<div style="display:flex;align-items:center;gap:4px;color:var(--text-faint);font-size:12px;overflow:hidden;align-self:center">${I.truck}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.sup}</span></div>`:'<div></div>'}
+            <div style="flex:1 1 60px"><div style="font-size:10px;color:var(--text-faint);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">${lb}</div><div style="font-size:20px;font-weight:800;color:${c}" class="mono">${v}</div></div>`).join('')}
+            ${item.loc?`<div style="flex:1 1 100%;display:flex;align-items:center;gap:4px;color:var(--text-faint);font-size:12px">${I.map} ${item.loc}</div>`:''}
+            ${item.sup?`<div style="flex:1 1 100%;display:flex;align-items:center;gap:4px;color:var(--text-faint);font-size:12px;overflow:hidden">${I.truck}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.sup}</span></div>`:''}
           </div>
         </div>`}).join('')}
       </div>
