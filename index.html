@@ -144,14 +144,46 @@ body.compact input,body.compact select,body.compact textarea{font-size:13px;padd
 </head>
 <body>
 <div id="app"><div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#f0f4f8"><div style="width:44px;height:44px;border:3px solid #e2e8f0;border-top-color:#4f46e5;border-radius:50%;animation:spin .8s linear infinite"></div><div style="font-size:14px;font-weight:600;color:#64748b;font-family:'Sarabun',sans-serif">กำลังโหลด…</div></div></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script>
+(function(){
+var CDN_TIMEOUT=15000;
+function loadScript(src){
+  return new Promise(function(res,rej){
+    var el=document.createElement('script');
+    var t=setTimeout(function(){el.remove();rej(new Error('timeout'));},CDN_TIMEOUT);
+    el.onload=function(){clearTimeout(t);res();};
+    el.onerror=function(){clearTimeout(t);rej(new Error('error'));};
+    el.src=src;document.body.appendChild(el);
+  });
+}
+function loadWithFallback(urls){
+  return urls.reduce(function(p,url){return p.catch(function(){return loadScript(url);});},Promise.reject());
+}
+window._cdnLoad=loadWithFallback([
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js',
+    'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js',
+  ])
+  .then(function(){return Promise.all([
+    loadWithFallback([
+      'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/minified/html5-qrcode.min.js',
+      'https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js',
+    ]),
+    loadWithFallback([
+      'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
+      'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js',
+    ]),
+  ]);})
+  .catch(function(){
+    document.getElementById('app').innerHTML='<div style="padding:30px;font-family:\'Sarabun\',sans-serif;color:#dc2626;background:#fee2e2;margin:20px;border-radius:12px;font-size:14px"><b>โหลดระบบไม่สำเร็จ</b><br><br>CDN ทั้งหมดเชื่อมต่อไม่ได้<br><br><small>กรุณาตรวจสอบสัญญาณอินเทอร์เน็ต แล้วกด "ลองใหม่"</small><br><br><button onclick="location.reload()" style="margin-top:8px;padding:8px 16px;background:#dc2626;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">ลองใหม่</button></div>';
+    window._cdnFailed=true;
+  });
+})();
+</script>
 <script>
 // ─── SUPABASE ────────────────────────────────────────────────
 const SUPABASE_URL='https://lmltfzyipuverhffzooy.supabase.co';
 const SUPABASE_KEY='sb_publishable_SsiOk-BBxN_zljuwT6uveA_-OBcfJa2';
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let sb;
 const MS_TEAMS_WEBHOOKS={
   '330AC': '',   // เครื่องเล็ก — วาง Incoming Webhook URL ของช่อง Teams ที่นี่
   '2521AC': '',  // เครื่องใหญ่ — วาง Incoming Webhook URL ของช่อง Teams ที่นี่
@@ -349,6 +381,7 @@ function restoreSession(){
   if(raw){try{const{id}=JSON.parse(raw);const found=S.users.find(x=>x.id===id);if(found){S.user=found;S.page='dashboard';}}catch(e){}}
 }
 async function initApp(){
+  if(!sb)sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
   S.theme=localStorage.getItem('toner-theme')||'auto';
   applyTheme();
   const hasCached=loadCache();
@@ -1718,7 +1751,8 @@ document.addEventListener('keydown',function(e){
   if(document.getElementById('modal-root')?.innerHTML)closeModal();
   else if(S.notifOpen)toggleNotif();
 });
-initApp();
+if(window._cdnLoad){window._cdnLoad.then(function(){if(!window._cdnFailed)initApp();});}
+else{initApp();}
 </script>
 </body>
 </html>
