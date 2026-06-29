@@ -568,8 +568,8 @@ function applyQtyChange(id,newQty,reason,ct){
     newNotif={id:uid(),type:nt,read:false,date:new Date().toISOString(),title:SC[nst].label+' — '+item.name+' ('+item.mk+')',msg:item.name+' ('+item.mk+') อยู่ที่ '+item.qty+' กล่อง'};
     S.notifications.unshift(newNotif);
   }
-  sb.from('inventory').upsert(mapInvToDB(item)).then(function(r){if(r.error)showToast('บันทึก inventory ไม่สำเร็จ');});
-  sb.from('history').insert(mapHistToDB(h)).then(function(r){if(r.error)showToast('บันทึกประวัติไม่สำเร็จ');});
+  sb.from('inventory').upsert(mapInvToDB(item)).then(function(r){if(r.error)showToast('บันทึกไม่สำเร็จ: '+r.error.message,'error');});
+  sb.from('history').insert(mapHistToDB(h)).then(function(r){if(r.error)showToast('ประวัติ: '+r.error.message,'error');});
   if(newNotif){
     sb.from('notifications').insert(mapNotifToDB(newNotif));
     if(nst!=='NORMAL')sendTeamsAlert(newNotif.title,newNotif.msg,nst,MS_TEAMS_WEBHOOKS[item.mk]||'');
