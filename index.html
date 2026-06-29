@@ -237,7 +237,7 @@ function defNotifs(){return[
 // users     : id,username,password,full_name,email,role,created_at,last_login
 // audit_logs: id,username,full_name,role,timestamp
 function mapInvFromDB(r){return{id:r.id,name:r.name,model:r.model,mk:r.mk,color:r.color,type:r.type,part:r.part,qty:r.qty,min:r.min??3,critical:r.critical??1,max:r.max??10,loc:r.loc||'',sup:r.sup||'',remarks:r.remarks||'',barcode:r.barcode||'',updatedAt:r.updated_at};}
-function mapInvToDB(i){return{id:i.id,name:i.name,model:i.model,mk:i.mk,color:i.color,type:i.type,part:i.part,qty:i.qty,min:i.min,critical:i.critical,max:i.max,loc:i.loc||null,sup:i.sup||null,remarks:i.remarks||null,barcode:i.barcode||null,updated_at:i.updatedAt||new Date().toISOString()};}
+function mapInvToDB(i){return{id:i.id,name:i.name,modแel:i.model,mk:i.mk,color:i.color,type:i.type,part:i.part,qty:i.qty,min:i.min,critical:i.critical,max:i.max,loc:i.loc||null,sup:i.sup||null,remarks:i.remarks||null,barcode:i.barcode||null,updated_at:i.updatedAt||new Date().toISOString()};}
 function mapHistFromDB(r){return{id:r.id,iid:r.iid,name:r.name,mk:r.mk,color:r.color,oq:r.oq,nq:r.nq,ct:r.ct,reason:r.reason,user:r.user_name??'System',date:r.date};}
 function mapHistToDB(h){return{id:h.id,iid:h.iid,name:h.name,mk:h.mk,color:h.color,oq:h.oq,nq:h.nq,ct:h.ct,reason:h.reason||null,user_name:h.user,date:h.date};}
 function mapNotifFromDB(r){return{id:r.id,type:r.type,title:r.title,msg:r.msg,read:r.is_read,date:r.date};}
