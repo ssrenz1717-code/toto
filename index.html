@@ -145,7 +145,7 @@ body.compact input,body.compact select,body.compact textarea{font-size:13px;padd
 <body>
 <div id="app"><div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#f0f4f8"><div style="width:44px;height:44px;border:3px solid #e2e8f0;border-top-color:#4f46e5;border-radius:50%;animation:spin .8s linear infinite"></div><div style="font-size:14px;font-weight:600;color:#64748b;font-family:'Sarabun',sans-serif">กำลังโหลด…</div></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script>
 // ─── SUPABASE ────────────────────────────────────────────────
@@ -273,17 +273,31 @@ function showToast(msg,type){
   document.body.appendChild(t);
   setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(function(){t.remove();},300);},3500);
 }
-function showLoading(){
+function showLoading(msg){
   document.getElementById('app').innerHTML='<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg-main)">'
     +'<div style="width:44px;height:44px;border:3px solid var(--border);border-top-color:#4f46e5;border-radius:50%;animation:spin .8s linear infinite"></div>'
-    +'<div style="font-size:14px;font-weight:600;color:var(--text-muted);font-family:\'Sarabun\',sans-serif">กำลังโหลดข้อมูล…</div>'
+    +'<div style="font-size:14px;font-weight:600;color:var(--text-muted);font-family:\'Sarabun\',sans-serif">'+(msg||'กำลังโหลดข้อมูล…')+'</div>'
     +'</div>';
+}
+const CACHE_KEY='toner-data-v1';
+const CACHE_TTL=10*60*1000;
+function saveCache(){try{localStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),inventory:S.inventory,history:S.history,notifications:S.notifications,users:S.users,auditLogs:S.auditLogs}));}catch(e){}}
+function loadCache(){
+  try{
+    const raw=localStorage.getItem(CACHE_KEY);
+    if(!raw)return false;
+    const c=JSON.parse(raw);
+    if(Date.now()-c.ts>CACHE_TTL)return false;
+    S.inventory=c.inventory||[];S.history=c.history||[];
+    S.notifications=c.notifications||[];S.users=c.users||[];S.auditLogs=c.auditLogs||[];
+    return true;
+  }catch(e){return false;}
 }
 async function loadFromSupabase(){
   const[invR,histR,notifR,usersR,auditR]=await Promise.all([
     sb.from('inventory').select('*').order('mk').order('part'),
-    sb.from('history').select('*').order('date',{ascending:false}),
-    sb.from('notifications').select('*').order('date',{ascending:false}),
+    sb.from('history').select('*').order('date',{ascending:false}).limit(500),
+    sb.from('notifications').select('*').order('date',{ascending:false}).limit(100),
     sb.from('users').select('*').order('created_at'),
     sb.from('audit_logs').select('*').order('timestamp',{ascending:false}).limit(200),
   ]);
@@ -306,10 +320,10 @@ async function seedIfEmpty(){
     if(!error&&data){
       S.inventory=data.map(mapInvFromDB);
       await sb.from('history').insert(DEF_HIST.map(h=>mapHistToDB(h)));
-      const{data:hd}=await sb.from('history').select('*').order('date',{ascending:false});
+      const{data:hd}=await sb.from('history').select('*').order('date',{ascending:false}).limit(500);
       if(hd)S.history=hd.map(mapHistFromDB);
       await sb.from('notifications').insert(defNotifs().map(n=>mapNotifToDB(n)));
-      const{data:nd}=await sb.from('notifications').select('*').order('date',{ascending:false});
+      const{data:nd}=await sb.from('notifications').select('*').order('date',{ascending:false}).limit(100);
       if(nd)S.notifications=nd.map(mapNotifFromDB);
     }
   }
@@ -327,29 +341,36 @@ function initRealtime(){
     })
     .subscribe();
 }
+function restoreSession(){
+  S.theme=localStorage.getItem('toner-theme')||'auto';
+  S.scale=localStorage.getItem('toner-scale')||'auto';
+  applyTheme();applyScale();
+  const raw=localStorage.getItem('toner-session');
+  if(raw){try{const{id}=JSON.parse(raw);const found=S.users.find(x=>x.id===id);if(found){S.user=found;S.page='dashboard';}}catch(e){}}
+}
 async function initApp(){
   S.theme=localStorage.getItem('toner-theme')||'auto';
   applyTheme();
-  showLoading();
-  try{
-    await loadFromSupabase();
-    await seedIfEmpty();
+  const hasCached=loadCache();
+  if(hasCached){
+    restoreSession();
+    render();
+    loadFromSupabase().then(()=>{saveCache();renderContent();}).catch(()=>{});
     initRealtime();
-    const raw=localStorage.getItem('toner-session');
-    if(raw){
-      try{
-        const{id}=JSON.parse(raw);
-        const found=S.users.find(x=>x.id===id);
-        if(found){S.user=found;S.page='dashboard';}
-      }catch(e){}
-    }
-  }catch(e){
-    document.getElementById('app').innerHTML='<div style="padding:30px;font-family:monospace;color:#dc2626;background:#fee2e2;margin:20px;border-radius:12px;font-size:13px"><b>เชื่อมต่อ Supabase ไม่ได้</b><br><br>'+e.message+'<br><br><small>ตรวจสอบ SUPABASE_URL และ SUPABASE_KEY และ RLS policy</small></div>';
     return;
   }
-  S.theme=localStorage.getItem('toner-theme')||'auto';
-  S.scale=localStorage.getItem('toner-scale')||'auto';
-  applyScale();
+  showLoading();
+  const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('หมดเวลาเชื่อมต่อ — กรุณาตรวจสอบอินเทอร์เน็ตแล้วโหลดหน้าใหม่')),12000));
+  try{
+    await Promise.race([loadFromSupabase(),timeout]);
+    await seedIfEmpty();
+    saveCache();
+    initRealtime();
+    restoreSession();
+  }catch(e){
+    document.getElementById('app').innerHTML='<div style="padding:30px;font-family:\'Sarabun\',sans-serif;color:#dc2626;background:#fee2e2;margin:20px;border-radius:12px;font-size:14px"><b>เชื่อมต่อ Supabase ไม่ได้</b><br><br>'+e.message+'<br><br><small>ตรวจสอบ SUPABASE_URL และ SUPABASE_KEY และ RLS policy</small><br><br><button onclick="localStorage.removeItem(\''+CACHE_KEY+'\');location.reload()" style="margin-top:8px;padding:8px 16px;background:#dc2626;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">ลองใหม่</button></div>';
+    return;
+  }
   render();
 }
 
