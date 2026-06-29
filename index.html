@@ -236,7 +236,7 @@ function defNotifs(){return[
 // users     : id,username,password,full_name,email,role,created_at,last_login
 // audit_logs: id,username,full_name,role,timestamp
 function mapInvFromDB(r){return{id:r.id,name:r.name,model:r.model,mk:r.mk,color:r.color,type:r.type,part:r.part,qty:r.qty,min:r.min??r.min_stock??3,critical:r.critical??r.critical_stock??1,max:r.max??r.max_stock??10,loc:r.loc||'',sup:r.sup||'',remarks:r.remarks||'',barcode:r.barcode||'',updatedAt:r.updated_at};}
-function mapInvToDB(i){return{id:i.id,name:i.name,model:i.model,mk:i.mk,color:i.color,type:i.type,part:i.part,qty:i.qty,min:i.min,critical:i.critical,max:i.max,loc:i.loc||null,sup:i.sup||null,remarks:i.remarks||null,barcode:i.barcode||null,updated_at:i.updatedAt||new Date().toISOString()};}
+function mapInvToDB(i){return{id:i.id,name:i.name,model:i.model,mk:i.mk,color:i.color,type:i.type,part:i.part,qty:i.qty,min_stock:i.min,critical_stock:i.critical,max_stock:i.max,loc:i.loc||null,sup:i.sup||null,remarks:i.remarks||null,barcode:i.barcode||null,updated_at:i.updatedAt||new Date().toISOString()};}
 function mapHistFromDB(r){return{id:r.id,iid:r.iid,name:r.name,mk:r.mk,color:r.color,oq:r.oq,nq:r.nq,ct:r.ct,reason:r.reason,user:r.changed_by,date:r.date};}
 function mapHistToDB(h){return{id:h.id,iid:h.iid,name:h.name,mk:h.mk,color:h.color,oq:h.oq,nq:h.nq,ct:h.ct,reason:h.reason||null,changed_by:h.user,date:h.date};}
 function mapNotifFromDB(r){return{id:r.id,type:r.type,title:r.title,msg:r.msg,read:r.is_read,date:r.date};}
@@ -252,7 +252,7 @@ let searchTimer=null;
 let searchComposing=false;
 let _prevFocus=null;
 let scanMode='OUT';
-let html5QrcodeScanner=null;
+let html5QrcodeInstance=null;
 let isProcessingScan=false;
 function _openModal(html){
   _prevFocus=document.activeElement;
@@ -313,6 +313,19 @@ async function seedIfEmpty(){
     }
   }
 }
+function initRealtime(){
+  sb.channel('toner-realtime')
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'inventory'},function(payload){
+      const updated=mapInvFromDB(payload.new);
+      const idx=S.inventory.findIndex(function(i){return i.id===updated.id;});
+      if(idx!==-1){S.inventory[idx]=updated;renderContent();}
+    })
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'history'},function(payload){
+      const entry=mapHistFromDB(payload.new);
+      if(!S.history.find(function(h){return h.id===entry.id;})){S.history.unshift(entry);}
+    })
+    .subscribe();
+}
 async function initApp(){
   S.theme=localStorage.getItem('toner-theme')||'auto';
   applyTheme();
@@ -320,6 +333,7 @@ async function initApp(){
   try{
     await loadFromSupabase();
     await seedIfEmpty();
+    initRealtime();
     const raw=localStorage.getItem('toner-session');
     if(raw){
       try{
@@ -678,6 +692,38 @@ function setScanMode(mode){
     label.style.color=mode==='OUT'?'#dc2626':'#16a34a';
   }
 }
+function onScanSuccess(decodedText){
+  if(isProcessingScan)return;
+  const code=decodedText.trim();
+  const item=S.inventory.find(function(i){
+    return(i.barcode&&i.barcode===code)||i.part.includes(code);
+  });
+  if(!item){showToast('ไม่พบ: "'+code+'"','error');return;}
+  if(scanMode==='OUT'&&item.qty===0){showToast('หมึกหมดแล้ว ไม่สามารถเบิกได้','error');return;}
+  isProcessingScan=true;
+  const newQty=scanMode==='OUT'?item.qty-1:item.qty+1;
+  const actionType=scanMode==='OUT'?'DECREASE':'INCREASE';
+  const reason=scanMode==='OUT'?'สแกนออก (ใช้หมึก)':'สแกนเข้า (เติมสต็อก)';
+  applyQtyChange(item.id,newQty,reason,actionType);
+  const verb=scanMode==='OUT'?'เบิกออก':'รับเข้า';
+  showToast(verb+' '+item.name+' ('+item.mk+') เหลือ '+newQty+' กล่อง','ok');
+  setTimeout(function(){isProcessingScan=false;},2000);
+}
+async function startScanner(){
+  const qr=new Html5Qrcode('reader');
+  html5QrcodeInstance=qr;
+  const cfg={fps:10,qrbox:{width:250,height:180}};
+  try{
+    await qr.start({facingMode:{exact:'environment'}},cfg,onScanSuccess,function(){});
+  }catch(e1){
+    try{
+      await qr.start({facingMode:'environment'},cfg,onScanSuccess,function(){});
+    }catch(e2){
+      html5QrcodeInstance=null;
+      showToast('ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการเข้าถึงกล้องในการตั้งค่า','error');
+    }
+  }
+}
 function openScanner(){
   if(!canEditInventory()){showToast('ต้องใช้สิทธิ์ Staff หรือ Admin','error');return;}
   scanMode='OUT';isProcessingScan=false;
@@ -703,7 +749,9 @@ function openScanner(){
             📥 สแกนเข้า<br><span style="font-size:11px;font-weight:400;opacity:.85">(เติมสต็อก)</span>
           </button>
         </div>
-        <div id="reader" style="width:100%;border-radius:12px;overflow:hidden;background:#000;min-height:240px"></div>
+        <div id="reader" style="width:100%;border-radius:12px;overflow:hidden;background:#000;min-height:240px;display:flex;align-items:center;justify-content:center">
+          <div style="color:#666;font-size:13px;font-family:'Sarabun',sans-serif">กำลังเปิดกล้อง…</div>
+        </div>
         <div style="text-align:center;font-size:12px;color:var(--text-faint);line-height:1.6;padding:8px 12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border2)">
           📦 สแกนบาร์โค้ดที่กล่องหมึกพิมพ์<br>
           <span style="color:var(--text-muted)">รองรับทั้งหมึกสี (ดำ/ฟ้า/ชมพู/เหลือง) และถังหมึกเสีย<br>ทั้งเครื่องเล็ก 330AC และเครื่องใหญ่ 2521AC</span>
@@ -711,43 +759,15 @@ function openScanner(){
       </div>
     </div>
   </div>`);
-  setTimeout(function(){
-    html5QrcodeScanner=new Html5QrcodeScanner('reader',{
-      fps:10,
-      qrbox:{width:250,height:180},
-      rememberLastUsedCamera:true,
-      supportedScanTypes:[Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-      videoConstraints:{facingMode:{ideal:'environment'}},
-    },false);
-    html5QrcodeScanner.render(function(decodedText){
-      if(isProcessingScan)return;
-      const code=decodedText.trim();
-      const item=S.inventory.find(function(i){
-        return(i.barcode&&i.barcode===code)||i.part.includes(code);
-      });
-      if(!item){
-        showToast('ไม่พบ: "'+code+'"','error');
-        return;
-      }
-      if(scanMode==='OUT'&&item.qty===0){
-        showToast('หมึกหมดแล้ว ไม่สามารถเบิกได้','error');
-        return;
-      }
-      isProcessingScan=true;
-      const newQty=scanMode==='OUT'?item.qty-1:item.qty+1;
-      const actionType=scanMode==='OUT'?'DECREASE':'INCREASE';
-      const reason=scanMode==='OUT'?'สแกนออก (ใช้หมึก)':'สแกนเข้า (เติมสต็อก)';
-      applyQtyChange(item.id,newQty,reason,actionType);
-      const verb=scanMode==='OUT'?'เบิกออก':'รับเข้า';
-      showToast(verb+' '+item.name+' ('+item.mk+') เหลือ '+(newQty)+' กล่อง','ok');
-      setTimeout(function(){isProcessingScan=false;},2000);
-    },function(){});
-  },300);
+  setTimeout(function(){startScanner();setScanMode('OUT');},300);
 }
-function closeScanner(){
-  if(html5QrcodeScanner){
-    html5QrcodeScanner.clear().catch(function(){});
-    html5QrcodeScanner=null;
+async function closeScanner(){
+  if(html5QrcodeInstance){
+    try{
+      if(html5QrcodeInstance.isScanning)await html5QrcodeInstance.stop();
+      html5QrcodeInstance.clear();
+    }catch(e){}
+    html5QrcodeInstance=null;
   }
   isProcessingScan=false;
   closeModal();
