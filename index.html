@@ -712,7 +712,7 @@ function onScanSuccess(decodedText){
 async function startScanner(){
   const qr=new Html5Qrcode('reader');
   html5QrcodeInstance=qr;
-  const cfg={fps:30,qrbox:function(w,h){const s=Math.min(w,h)*0.85;return{width:s,height:s};},aspectRatio:1.0};
+  const cfg={fps:30,qrbox:function(w,h){return{width:Math.min(w*0.92,360),height:100};},aspectRatio:1.7778,useBarCodeDetectorIfSupported:true};
   // Try camera ID first (more compatible with iOS Safari)
   try{
     const cameras=await Html5Qrcode.getCameras();
