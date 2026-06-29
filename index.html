@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 *::-webkit-scrollbar{width:5px;height:5px}
@@ -150,6 +151,10 @@ body.compact input,body.compact select,body.compact textarea{font-size:13px;padd
 const SUPABASE_URL='https://lmltfzyipuverhffzooy.supabase.co';
 const SUPABASE_KEY='sb_publishable_SsiOk-BBxN_zljuwT6uveA_-OBcfJa2';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const MS_TEAMS_WEBHOOKS={
+  '330AC': '',   // เครื่องเล็ก — วาง Incoming Webhook URL ของช่อง Teams ที่นี่
+  '2521AC': '',  // เครื่องใหญ่ — วาง Incoming Webhook URL ของช่อง Teams ที่นี่
+};
 
 // ─── ICONS ───────────────────────────────────────────────────
 const I={
@@ -188,16 +193,20 @@ const USERS=[
   {id:'u3',username:'viewer',password:'Viewer@123456',fullName:'IT Manager',role:'VIEWER'},
 ];
 const DEF_INV=[
-  {id:'i1',name:'หมึกดำ',model:'Toshiba e-STUDIO 330AC (เครื่องเล็ก)',mk:'330AC',color:'BLACK',type:'TONER',part:'T-FC330AK',qty:6,min:3,critical:1,max:10,loc:'Rack A-1',sup:'Toshiba Thailand Co., Ltd.'},
-  {id:'i2',name:'หมึกฟ้า',model:'Toshiba e-STUDIO 330AC (เครื่องเล็ก)',mk:'330AC',color:'CYAN',type:'TONER',part:'T-FC330AC',qty:1,min:3,critical:1,max:10,loc:'Rack A-2',sup:'Toshiba Thailand Co., Ltd.'},
-  {id:'i3',name:'หมึกชมพู',model:'Toshiba e-STUDIO 330AC (เครื่องเล็ก)',mk:'330AC',color:'MAGENTA',type:'TONER',part:'T-FC330AM',qty:0,min:3,critical:1,max:10,loc:'Rack A-3',sup:'Toshiba Thailand Co., Ltd.'},
-  {id:'i4',name:'หมึกเหลือง',model:'Toshiba e-STUDIO 330AC (เครื่องเล็ก)',mk:'330AC',color:'YELLOW',type:'TONER',part:'T-FC330AY',qty:2,min:3,critical:1,max:10,loc:'Rack A-4',sup:'Toshiba Thailand Co., Ltd.'},
-  {id:'i5',name:'ถังหมึกเสีย',model:'Toshiba e-STUDIO 330AC (เครื่องเล็ก)',mk:'330AC',color:'WASTE',type:'WASTE_TONER',part:'TB-FC330E',qty:4,min:2,critical:1,max:6,loc:'Rack B-1',sup:'Toshiba Thailand Co., Ltd.'},
-  {id:'i6',name:'หมึกดำ',model:'Toshiba e-STUDIO 2521AC (เครื่องใหญ่)',mk:'2521AC',color:'BLACK',type:'TONER',part:'T-FC2521AK',qty:5,min:3,critical:1,max:10,loc:'Rack C-1',sup:'Toshiba Thailand Co., Ltd.'},
-  {id:'i7',name:'หมึกฟ้า',model:'Toshiba e-STUDIO 2521AC (เครื่องใหญ่)',mk:'2521AC',color:'CYAN',type:'TONER',part:'T-FC2521AC',qty:1,min:3,critical:1,max:10,loc:'Rack C-2',sup:'Toshiba Thailand Co., Ltd.'},
-  {id:'i8',name:'หมึกชมพู',model:'Toshiba e-STUDIO 2521AC (เครื่องใหญ่)',mk:'2521AC',color:'MAGENTA',type:'TONER',part:'T-FC2521AM',qty:3,min:3,critical:1,max:10,loc:'Rack C-3',sup:'Toshiba Thailand Co., Ltd.'},
-  {id:'i9',name:'หมึกเหลือง',model:'Toshiba e-STUDIO 2521AC (เครื่องใหญ่)',mk:'2521AC',color:'YELLOW',type:'TONER',part:'T-FC2521AY',qty:2,min:3,critical:1,max:10,loc:'Rack C-4',sup:'Toshiba Thailand Co., Ltd.'},
-  {id:'i10',name:'ถังหมึกเสีย',model:'Toshiba e-STUDIO 2521AC (เครื่องใหญ่)',mk:'2521AC',color:'WASTE',type:'WASTE_TONER',part:'TB-FC2521E',qty:0,min:2,critical:1,max:6,loc:'Rack D-1',sup:'Toshiba Thailand Co., Ltd.'},
+  // ── 330AC เครื่องเล็ก ─────────────────────────────────────────
+  // barcode: แทนที่ด้วยรหัสบาร์โค้ดจริงของแต่ละสี เช่น '9147' สำหรับดำ
+  {id:'i1',name:'หมึกดำ',model:'Toshiba e-STUDIO 330AC (เครื่องเล็ก)',mk:'330AC',color:'BLACK',type:'TONER',part:'T-FC330AK',qty:6,min:3,critical:1,max:10,loc:'Rack A-1',sup:'Toshiba Thailand Co., Ltd.',barcode:'330AC-K'},
+  {id:'i2',name:'หมึกฟ้า',model:'Toshiba e-STUDIO 330AC (เครื่องเล็ก)',mk:'330AC',color:'CYAN',type:'TONER',part:'T-FC330AC',qty:1,min:3,critical:1,max:10,loc:'Rack A-2',sup:'Toshiba Thailand Co., Ltd.',barcode:'330AC-C'},
+  {id:'i3',name:'หมึกชมพู',model:'Toshiba e-STUDIO 330AC (เครื่องเล็ก)',mk:'330AC',color:'MAGENTA',type:'TONER',part:'T-FC330AM',qty:0,min:3,critical:1,max:10,loc:'Rack A-3',sup:'Toshiba Thailand Co., Ltd.',barcode:'330AC-M'},
+  {id:'i4',name:'หมึกเหลือง',model:'Toshiba e-STUDIO 330AC (เครื่องเล็ก)',mk:'330AC',color:'YELLOW',type:'TONER',part:'T-FC330AY',qty:2,min:3,critical:1,max:10,loc:'Rack A-4',sup:'Toshiba Thailand Co., Ltd.',barcode:'330AC-Y'},
+  {id:'i5',name:'ถังหมึกเสีย',model:'Toshiba e-STUDIO 330AC (เครื่องเล็ก)',mk:'330AC',color:'WASTE',type:'WASTE_TONER',part:'TB-FC330E',qty:4,min:2,critical:1,max:6,loc:'Rack B-1',sup:'Toshiba Thailand Co., Ltd.',barcode:'330AC-W'},
+  // ── 2521AC เครื่องใหญ่ ────────────────────────────────────────
+  // barcode: แทนที่ด้วยรหัสบาร์โค้ดจริง เช่น '9152' สำหรับดำเครื่องใหญ่
+  {id:'i6',name:'หมึกดำ',model:'Toshiba e-STUDIO 2521AC (เครื่องใหญ่)',mk:'2521AC',color:'BLACK',type:'TONER',part:'T-FC2521AK',qty:5,min:3,critical:1,max:10,loc:'Rack C-1',sup:'Toshiba Thailand Co., Ltd.',barcode:'2521AC-K'},
+  {id:'i7',name:'หมึกฟ้า',model:'Toshiba e-STUDIO 2521AC (เครื่องใหญ่)',mk:'2521AC',color:'CYAN',type:'TONER',part:'T-FC2521AC',qty:1,min:3,critical:1,max:10,loc:'Rack C-2',sup:'Toshiba Thailand Co., Ltd.',barcode:'2521AC-C'},
+  {id:'i8',name:'หมึกชมพู',model:'Toshiba e-STUDIO 2521AC (เครื่องใหญ่)',mk:'2521AC',color:'MAGENTA',type:'TONER',part:'T-FC2521AM',qty:3,min:3,critical:1,max:10,loc:'Rack C-3',sup:'Toshiba Thailand Co., Ltd.',barcode:'2521AC-M'},
+  {id:'i9',name:'หมึกเหลือง',model:'Toshiba e-STUDIO 2521AC (เครื่องใหญ่)',mk:'2521AC',color:'YELLOW',type:'TONER',part:'T-FC2521AY',qty:2,min:3,critical:1,max:10,loc:'Rack C-4',sup:'Toshiba Thailand Co., Ltd.',barcode:'2521AC-Y'},
+  {id:'i10',name:'ถังหมึกเสีย',model:'Toshiba e-STUDIO 2521AC (เครื่องใหญ่)',mk:'2521AC',color:'WASTE',type:'WASTE_TONER',part:'TB-FC2521E',qty:0,min:2,critical:1,max:6,loc:'Rack D-1',sup:'Toshiba Thailand Co., Ltd.',barcode:'2521AC-W'},
 ];
 const t=Date.now();
 const DEF_HIST=[
@@ -221,13 +230,13 @@ function defNotifs(){return[
 
 // ─── DB MAPPING ───────────────────────────────────────────────
 // Expected Supabase columns:
-// inventory : id,name,model,mk,color,type,part,qty,min,critical,max,loc,sup,remarks,updated_at
+// inventory : id,name,model,mk,color,type,part,qty,min,critical,max,loc,sup,remarks,barcode,updated_at
 // history   : id,iid,name,mk,color,oq,nq,ct,reason,changed_by,date
 // notifications: id,type,title,msg,is_read,date
 // users     : id,username,password,full_name,email,role,created_at,last_login
 // audit_logs: id,username,full_name,role,timestamp
-function mapInvFromDB(r){return{id:r.id,name:r.name,model:r.model,mk:r.mk,color:r.color,type:r.type,part:r.part,qty:r.qty,min:r.min??r.min_stock??3,critical:r.critical??r.critical_stock??1,max:r.max??r.max_stock??10,loc:r.loc||'',sup:r.sup||'',remarks:r.remarks||'',updatedAt:r.updated_at};}
-function mapInvToDB(i){return{id:i.id,name:i.name,model:i.model,mk:i.mk,color:i.color,type:i.type,part:i.part,qty:i.qty,min:i.min,critical:i.critical,max:i.max,loc:i.loc||null,sup:i.sup||null,remarks:i.remarks||null,updated_at:i.updatedAt||new Date().toISOString()};}
+function mapInvFromDB(r){return{id:r.id,name:r.name,model:r.model,mk:r.mk,color:r.color,type:r.type,part:r.part,qty:r.qty,min:r.min??r.min_stock??3,critical:r.critical??r.critical_stock??1,max:r.max??r.max_stock??10,loc:r.loc||'',sup:r.sup||'',remarks:r.remarks||'',barcode:r.barcode||'',updatedAt:r.updated_at};}
+function mapInvToDB(i){return{id:i.id,name:i.name,model:i.model,mk:i.mk,color:i.color,type:i.type,part:i.part,qty:i.qty,min:i.min,critical:i.critical,max:i.max,loc:i.loc||null,sup:i.sup||null,remarks:i.remarks||null,barcode:i.barcode||null,updated_at:i.updatedAt||new Date().toISOString()};}
 function mapHistFromDB(r){return{id:r.id,iid:r.iid,name:r.name,mk:r.mk,color:r.color,oq:r.oq,nq:r.nq,ct:r.ct,reason:r.reason,user:r.changed_by,date:r.date};}
 function mapHistToDB(h){return{id:h.id,iid:h.iid,name:h.name,mk:h.mk,color:h.color,oq:h.oq,nq:h.nq,ct:h.ct,reason:h.reason||null,changed_by:h.user,date:h.date};}
 function mapNotifFromDB(r){return{id:r.id,type:r.type,title:r.title,msg:r.msg,read:r.is_read,date:r.date};}
@@ -242,6 +251,9 @@ let S={page:'login',mode:'login',user:null,sidebarOpen:true,notifOpen:false,filt
 let searchTimer=null;
 let searchComposing=false;
 let _prevFocus=null;
+let scanMode='OUT';
+let html5QrcodeScanner=null;
+let isProcessingScan=false;
 function _openModal(html){
   _prevFocus=document.activeElement;
   document.getElementById('modal-root').innerHTML=html;
@@ -412,6 +424,37 @@ function unread(){return S.notifications.filter(n=>!n.read).length;}
 function isAdmin(){return S.user?.role==='ADMIN';}
 function canEditInventory(){return S.user?.role==='STAFF'||S.user?.role==='ADMIN';}
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function maskPwd(p){if(!p)return'—';const s=String(p);return s.length<=3?'•'.repeat(s.length):'•'.repeat(s.length-3)+s.slice(-3);}
+async function sendTeamsAlert(title,message,statusType,webhookUrl){
+  if(!webhookUrl)return;
+  const themeColor=statusType==='OUT_OF_STOCK'||statusType==='CRITICAL'?'dc2626':'d97706';
+  const statusLabel=statusType==='OUT_OF_STOCK'?'หมดแล้ว':statusType==='CRITICAL'?'วิกฤต':'ใกล้หมด';
+  const payload={
+    '@type':'MessageCard',
+    '@context':'http://schema.org/extensions',
+    themeColor,
+    summary:title,
+    sections:[{
+      activityTitle:title,
+      activitySubtitle:'TonerTrack · ระบบจัดการสต็อกหมึกพิมพ์',
+      activityText:message,
+      facts:[
+        {name:'สถานะ',value:statusLabel},
+        {name:'เวลา',value:new Date().toLocaleString('th-TH')},
+      ],
+      markdown:false,
+    }],
+  };
+  try{
+    await fetch(webhookUrl,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload),
+    });
+  }catch(e){
+    console.error('[TeamsAlert] webhook failed:',e);
+  }
+}
 function stats(){const v=S.inventory;return{total:v.length,normal:v.filter(i=>status(i)==='NORMAL').length,low:v.filter(i=>status(i)==='LOW').length,critical:v.filter(i=>status(i)==='CRITICAL').length,outOfStock:v.filter(i=>status(i)==='OUT_OF_STOCK').length,today:S.history.filter(h=>new Date(h.date)>new Date(new Date().setHours(0,0,0,0))).length};}
 function pct(qty,max){return max>0?Math.min(100,Math.round(qty/max*100)):0;}
 function tonerDot(color,size=10){const tc=TC[color]||TC.BLACK;return`<span style="width:${size}px;height:${size}px;border-radius:50%;background:${tc.hex};display:inline-block;flex-shrink:0"></span>`;}
@@ -513,7 +556,10 @@ function applyQtyChange(id,newQty,reason,ct){
   }
   sb.from('inventory').upsert(mapInvToDB(item)).then(function(r){if(r.error)showToast('บันทึก inventory ไม่สำเร็จ');});
   sb.from('history').insert(mapHistToDB(h)).then(function(r){if(r.error)showToast('บันทึกประวัติไม่สำเร็จ');});
-  if(newNotif)sb.from('notifications').insert(mapNotifToDB(newNotif));
+  if(newNotif){
+    sb.from('notifications').insert(mapNotifToDB(newNotif));
+    if(nst!=='NORMAL')sendTeamsAlert(newNotif.title,newNotif.msg,nst,MS_TEAMS_WEBHOOKS[item.mk]||'');
+  }
   const card=document.querySelector(`[data-card="${id}"]`);
   if(card){const ctx=card.dataset?.context||'inventory';card.outerHTML=renderCard(item,S.inventory.indexOf(item),ctx);}
   const nb=document.getElementById('notif-badge');
@@ -612,6 +658,101 @@ function closeModal(){
   try{if(_prevFocus&&typeof _prevFocus.focus==='function')_prevFocus.focus({preventScroll:true});}catch(e){}
   _prevFocus=null;
 }
+
+// ─── SCANNER ──────────────────────────────────────────────────
+function setScanMode(mode){
+  scanMode=mode;
+  const outBtn=document.getElementById('scan-btn-out');
+  const inBtn=document.getElementById('scan-btn-in');
+  if(!outBtn||!inBtn)return;
+  if(mode==='OUT'){
+    outBtn.style.background='#dc2626';outBtn.style.color='#fff';outBtn.style.borderColor='#dc2626';
+    inBtn.style.background='var(--surface2)';inBtn.style.color='var(--text-muted)';inBtn.style.borderColor='var(--border)';
+  } else {
+    inBtn.style.background='#16a34a';inBtn.style.color='#fff';inBtn.style.borderColor='#16a34a';
+    outBtn.style.background='var(--surface2)';outBtn.style.color='var(--text-muted)';outBtn.style.borderColor='var(--border)';
+  }
+  const label=document.getElementById('scan-mode-label');
+  if(label){
+    label.textContent=mode==='OUT'?'โหมด: เบิกออก (ใช้หมึก)':'โหมด: รับเข้า (เติมสต็อก)';
+    label.style.color=mode==='OUT'?'#dc2626':'#16a34a';
+  }
+}
+function openScanner(){
+  if(!canEditInventory()){showToast('ต้องใช้สิทธิ์ Staff หรือ Admin','error');return;}
+  scanMode='OUT';isProcessingScan=false;
+  _openModal(`
+  <div class="modal-bg" onclick="if(event.target===this)closeScanner()" role="dialog" aria-modal="true" aria-label="สแกน QR / Barcode">
+    <div class="card fade-up" style="width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.18);overflow:hidden">
+      <div style="height:4px;background:linear-gradient(90deg,#dc2626,#16a34a)"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border2)">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--text-primary)">📷 สแกน QR / Barcode</div>
+          <div id="scan-mode-label" style="font-size:12px;font-weight:600;color:#dc2626;margin-top:2px">โหมด: เบิกออก (ใช้หมึก)</div>
+        </div>
+        <button onclick="closeScanner()" class="icon-btn" aria-label="ปิด">${I.x}</button>
+      </div>
+      <div style="padding:16px 18px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;gap:8px">
+          <button id="scan-btn-out" onclick="setScanMode('OUT')"
+            style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid #dc2626;background:#dc2626;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all .15s">
+            📤 สแกนออก<br><span style="font-size:11px;font-weight:400;opacity:.85">(ใช้หมึก)</span>
+          </button>
+          <button id="scan-btn-in" onclick="setScanMode('IN')"
+            style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all .15s">
+            📥 สแกนเข้า<br><span style="font-size:11px;font-weight:400;opacity:.85">(เติมสต็อก)</span>
+          </button>
+        </div>
+        <div id="reader" style="width:100%;border-radius:12px;overflow:hidden;background:#000;min-height:240px"></div>
+        <div style="text-align:center;font-size:12px;color:var(--text-faint);line-height:1.6;padding:8px 12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border2)">
+          📦 สแกนบาร์โค้ดที่กล่องหมึกพิมพ์<br>
+          <span style="color:var(--text-muted)">รองรับทั้งหมึกสี (ดำ/ฟ้า/ชมพู/เหลือง) และถังหมึกเสีย<br>ทั้งเครื่องเล็ก 330AC และเครื่องใหญ่ 2521AC</span>
+        </div>
+      </div>
+    </div>
+  </div>`);
+  setTimeout(function(){
+    html5QrcodeScanner=new Html5QrcodeScanner('reader',{
+      fps:10,
+      qrbox:{width:250,height:180},
+      rememberLastUsedCamera:true,
+      supportedScanTypes:[Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+      videoConstraints:{facingMode:{ideal:'environment'}},
+    },false);
+    html5QrcodeScanner.render(function(decodedText){
+      if(isProcessingScan)return;
+      const code=decodedText.trim();
+      const item=S.inventory.find(function(i){
+        return(i.barcode&&i.barcode===code)||i.part.includes(code);
+      });
+      if(!item){
+        showToast('ไม่พบรหัสสินค้านี้ในระบบ','error');
+        return;
+      }
+      if(scanMode==='OUT'&&item.qty===0){
+        showToast('หมึกหมดแล้ว ไม่สามารถเบิกได้','error');
+        return;
+      }
+      isProcessingScan=true;
+      const newQty=scanMode==='OUT'?item.qty-1:item.qty+1;
+      const actionType=scanMode==='OUT'?'DECREASE':'INCREASE';
+      const reason=scanMode==='OUT'?'สแกนออก (ใช้หมึก)':'สแกนเข้า (เติมสต็อก)';
+      applyQtyChange(item.id,newQty,reason,actionType);
+      const verb=scanMode==='OUT'?'เบิกออก':'รับเข้า';
+      showToast(verb+' '+item.name+' ('+item.mk+') เหลือ '+(newQty)+' กล่อง','ok');
+      setTimeout(function(){isProcessingScan=false;},2000);
+    },function(){});
+  },300);
+}
+function closeScanner(){
+  if(html5QrcodeScanner){
+    html5QrcodeScanner.clear().catch(function(){});
+    html5QrcodeScanner=null;
+  }
+  isProcessingScan=false;
+  closeModal();
+}
+
 function openSettings(id){if(!isAdmin()){showToast('ต้องใช้สิทธิ์ Admin เพื่อตั้งค่า','error');return;}S.settingsItem=id;renderModal();}
 function closeSettings(){closeModal();}
 function saveSettings(){
@@ -1095,6 +1236,7 @@ function renderDashboard(){
         <span style="font-size:12px;color:var(--text-faint);margin-left:8px">แสดง ${items.length} จาก ${S.inventory.length} รายการ</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        ${canEditInventory()?`<button onclick="openScanner()" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:#4f46e5;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;box-shadow:0 2px 8px rgba(79,70,229,.25);white-space:nowrap" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">📷 สแกนเบิก/รับของ</button>`:''}
         <div style="position:relative">
           <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-faint)">${I.search}</span>
           <input id="search-input" type="text" placeholder="ค้นหาหมึก, รุ่นเครื่อง…" value="${esc(S.search)}" oninput="setSearch(this.value)" style="padding-left:34px;width:180px"/>
@@ -1234,13 +1376,14 @@ function renderUsers(){
         +'<td style="font-weight:600;color:var(--text-primary)">'+esc(u.fullName)+(isSelf?' <span style="font-size:10px;padding:2px 6px;border-radius:99px;background:#ede9fe;color:#4f46e5;font-weight:700">คุณ</span>':'')+'</td>'
         +'<td style="font-family:\'JetBrains Mono\',monospace;font-size:12px">'+esc(u.username)+'</td>'
         +'<td style="color:var(--text-muted);font-size:12px">'+esc(u.email||'—')+'</td>'
+        +'<td style="font-family:\'JetBrains Mono\',monospace;font-size:12px;letter-spacing:.05em;color:var(--text-faint)">'+maskPwd(u.password)+'</td>'
         +roleCell
         +'<td style="color:var(--text-faint);font-size:12px;white-space:nowrap">'+(u.createdAt?fmtDt(u.createdAt):'—')+'</td>'
         +'<td style="color:var(--text-faint);font-size:12px;white-space:nowrap">'+(u.lastLogin?fmtDt(u.lastLogin):'ยังไม่เคย')+'</td>'
         +delCell+'</tr>';
     });
-    if(!rows)rows='<tr><td colspan="7" style="text-align:center;color:var(--text-faint);padding:30px">ไม่มีข้อมูลผู้ใช้</td></tr>';
-    bodyHtml='<div style="overflow-x:auto"><table><thead><tr><th>ชื่อ-นามสกุล</th><th>ชื่อผู้ใช้</th><th>อีเมล</th><th>สิทธิ์</th><th>สมัครเมื่อ</th><th>เข้าสู่ล่าสุด</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    if(!rows)rows='<tr><td colspan="8" style="text-align:center;color:var(--text-faint);padding:30px">ไม่มีข้อมูลผู้ใช้</td></tr>';
+    bodyHtml='<div style="overflow-x:auto"><table><thead><tr><th>ชื่อ-นามสกุล</th><th>ชื่อผู้ใช้</th><th>อีเมล</th><th>รหัสผ่าน</th><th>สิทธิ์</th><th>สมัครเมื่อ</th><th>เข้าสู่ล่าสุด</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   } else {
     let rows='';
     S.auditLogs.forEach(function(log){
