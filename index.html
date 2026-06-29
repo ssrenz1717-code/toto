@@ -726,7 +726,7 @@ function openScanner(){
         return(i.barcode&&i.barcode===code)||i.part.includes(code);
       });
       if(!item){
-        showToast('ไม่พบรหัสสินค้านี้ในระบบ','error');
+        showToast('ไม่พบ: "'+code+'"','error');
         return;
       }
       if(scanMode==='OUT'&&item.qty===0){
