@@ -807,6 +807,7 @@ function saveSettings(){
   if(crit>=mn||mn>=mx){alert('วิกฤต < ขั้นต่ำ < สูงสุด (ต้องเรียงน้อยไปมาก)');return;}
   item.critical=crit;item.min=mn;item.max=mx;
   item.loc=g('loc')||item.loc;item.sup=g('sup')||item.sup;item.remarks=g('rem')||'';
+  item.barcode=g('bc');
   sb.from('inventory').upsert(mapInvToDB(item)).then(function(r){if(r.error)showToast('บันทึกไม่สำเร็จ: '+r.error.message);else showToast('บันทึกการตั้งค่าแล้ว','ok');});
   closeSettings();renderContent();
 }
@@ -1490,7 +1491,7 @@ function renderModal(){
           <div style="font-size:11px;color:var(--text-faint);margin-top:10px;text-align:center;background:var(--surface2);padding:6px;border-radius:8px">วิกฤต &lt; ขั้นต่ำ &lt; สูงสุด</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:10px">
-          ${[['loc','📍 ตำแหน่งจัดเก็บ',eLoc,'เช่น Rack A-1'],['sup','🚚 ซัพพลายเออร์',eSup,'เช่น Toshiba Thailand'],['rem','📝 หมายเหตุ',eRem,'บันทึกเพิ่มเติม']].map(([id,lb,v,ph])=>`
+          ${[['bc','🔲 Barcode (ค่าจริงบนกล่อง)',esc(item.barcode||''),'เช่น 1P6AG00009148'],['loc','📍 ตำแหน่งจัดเก็บ',eLoc,'เช่น Rack A-1'],['sup','🚚 ซัพพลายเออร์',eSup,'เช่น Toshiba Thailand'],['rem','📝 หมายเหตุ',eRem,'บันทึกเพิ่มเติม']].map(([id,lb,v,ph])=>`
           <div>
             <label for="sf-${id}" style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">${lb}</label>
             <input id="sf-${id}" type="text" value="${v}" placeholder="${ph}"/>
