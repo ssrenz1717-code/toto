@@ -235,8 +235,8 @@ function defNotifs(){return[
 // notifications: id,type,title,msg,is_read,date
 // users     : id,username,password,full_name,email,role,created_at,last_login
 // audit_logs: id,username,full_name,role,timestamp
-function mapInvFromDB(r){return{id:r.id,name:r.name,model:r.model,mk:r.mk,color:r.color,type:r.type,part:r.part,qty:r.qty,min:r.min??r.min_stock??3,critical:r.critical??r.critical_stock??1,max:r.max??r.max_stock??10,loc:r.loc||'',sup:r.sup||'',remarks:r.remarks||'',barcode:r.barcode||'',updatedAt:r.updated_at};}
-function mapInvToDB(i){return{id:i.id,name:i.name,model:i.model,mk:i.mk,color:i.color,type:i.type,part:i.part,qty:i.qty,min_stock:i.min,critical_stock:i.critical,max_stock:i.max,loc:i.loc||null,sup:i.sup||null,remarks:i.remarks||null,barcode:i.barcode||null,updated_at:i.updatedAt||new Date().toISOString()};}
+function mapInvFromDB(r){return{id:r.id,name:r.name,model:r.model,mk:r.mk,color:r.color,type:r.type,part:r.part,qty:r.qty,min:r.min??3,critical:r.critical??1,max:r.max??10,loc:r.loc||'',sup:r.sup||'',remarks:r.remarks||'',barcode:r.barcode||'',updatedAt:r.updated_at};}
+function mapInvToDB(i){return{id:i.id,name:i.name,model:i.model,mk:i.mk,color:i.color,type:i.type,part:i.part,qty:i.qty,min:i.min,critical:i.critical,max:i.max,loc:i.loc||null,sup:i.sup||null,remarks:i.remarks||null,barcode:i.barcode||null,updated_at:i.updatedAt||new Date().toISOString()};}
 function mapHistFromDB(r){return{id:r.id,iid:r.iid,name:r.name,mk:r.mk,color:r.color,oq:r.oq,nq:r.nq,ct:r.ct,reason:r.reason,user:r.changed_by,date:r.date};}
 function mapHistToDB(h){return{id:h.id,iid:h.iid,name:h.name,mk:h.mk,color:h.color,oq:h.oq,nq:h.nq,ct:h.ct,reason:h.reason||null,changed_by:h.user,date:h.date};}
 function mapNotifFromDB(r){return{id:r.id,type:r.type,title:r.title,msg:r.msg,read:r.is_read,date:r.date};}
