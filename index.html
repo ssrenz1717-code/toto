@@ -693,12 +693,21 @@ function setScanMode(mode){
   }
 }
 function onScanSuccess(decodedText){
-  if(isProcessingScan)return;
   const code=decodedText.trim();
+  const dbg=document.getElementById('scan-debug');
+  if(dbg){dbg.textContent='อ่านได้: '+code;dbg.style.color='#16a34a';dbg.style.fontWeight='700';}
+  if(isProcessingScan)return;
+  const norm=function(s){return(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');};
+  const nc=norm(code);
   const item=S.inventory.find(function(i){
-    return(i.barcode&&i.barcode===code)||i.part.includes(code);
+    const nb=norm(i.barcode);const np=norm(i.part);
+    return(nb&&(nb===nc||nc.includes(nb)||nb.includes(nc)))||(np&&(np===nc||nc.includes(np)||np.includes(nc)));
   });
-  if(!item){showToast('ไม่พบ: "'+code+'"','error');return;}
+  if(!item){
+    const dbg2=document.getElementById('scan-debug');
+    if(dbg2){dbg2.textContent='ไม่พบ: '+code;dbg2.style.color='#dc2626';}
+    showToast('ไม่พบ: "'+code+'" — ลองป้อนรหัสด้วยตนเองด้านล่าง','error');return;
+  }
   if(scanMode==='OUT'&&item.qty===0){showToast('หมึกหมดแล้ว ไม่สามารถเบิกได้','error');return;}
   isProcessingScan=true;
   const newQty=scanMode==='OUT'?item.qty-1:item.qty+1;
@@ -761,9 +770,15 @@ function openScanner(){
         <div id="reader" style="width:100%;border-radius:12px;overflow:hidden;background:#000;min-height:240px;display:flex;align-items:center;justify-content:center">
           <div style="color:#666;font-size:13px;font-family:'Sarabun',sans-serif">กำลังเปิดกล้อง…</div>
         </div>
-        <div style="text-align:center;font-size:12px;color:var(--text-faint);line-height:1.6;padding:8px 12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border2)">
-          📦 สแกนบาร์โค้ดที่กล่องหมึกพิมพ์<br>
-          <span style="color:var(--text-muted)">รองรับทั้งหมึกสี (ดำ/ฟ้า/ชมพู/เหลือง) และถังหมึกเสีย<br>ทั้งเครื่องเล็ก 330AC และเครื่องใหญ่ 2521AC</span>
+        <div id="scan-debug" style="text-align:center;font-size:12px;color:var(--text-faint);padding:7px 12px;background:var(--surface3);border-radius:8px;border:1px solid var(--border);font-family:'JetBrains Mono',monospace;word-break:break-all">รอสแกน…</div>
+        <div style="display:flex;gap:6px">
+          <input id="scan-manual" type="text" placeholder="ป้อนรหัสบาร์โค้ดด้วยตนเอง…" style="flex:1;font-size:13px"
+            onkeydown="if(event.key==='Enter'){onScanSuccess(this.value);this.value='';}" autocomplete="off" autocorrect="off" autocapitalize="off"/>
+          <button onclick="onScanSuccess(document.getElementById('scan-manual').value);document.getElementById('scan-manual').value='';"
+            style="padding:9px 14px;border-radius:10px;background:#4f46e5;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;white-space:nowrap">ค้นหา</button>
+        </div>
+        <div style="text-align:center;font-size:11px;color:var(--text-faint);line-height:1.6;padding:6px 12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border2)">
+          📦 จ่อบาร์โค้ดแนวนอนให้อยู่ในกรอบสีขาว · หรือป้อนรหัสด้วยตนเองด้านบน
         </div>
       </div>
     </div>
