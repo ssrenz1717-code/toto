@@ -170,13 +170,17 @@ window._cdnLoad=loadWithFallback([
     setMsg('กำลังโหลด QR library…');
     return Promise.all([
       loadOptional([
-        'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/minified/html5-qrcode.min.js',
-        'https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js',
+        '/html5-qrcode.min.js',
+        'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
       ]),
       loadOptional([
-        'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
-        'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js',
-      ]),
+        '/qrcode-gen.js',
+        'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js',
+      ]).then(function(){
+        if(typeof qrcode!=='undefined'&&typeof QRCode==='undefined'){
+          window.QRCode={toDataURL:function(text,opts){return new Promise(function(res,rej){try{var sz=(opts&&opts.width)||200,mg=(opts&&opts.margin!=null?opts.margin:4),ec=((opts&&opts.errorCorrectionLevel)||'M').charAt(0).toUpperCase(),dk=(opts&&opts.color&&opts.color.dark)||'#000000',lt=(opts&&opts.color&&opts.color.light)||'#ffffff',q=qrcode(0,ec);q.addData(text);q.make();var mc=q.getModuleCount(),cs=Math.floor(sz/(mc+2*mg)),as=cs*(mc+2*mg),cv=document.createElement('canvas');cv.width=as;cv.height=as;var ctx=cv.getContext('2d');ctx.fillStyle=lt;ctx.fillRect(0,0,as,as);ctx.fillStyle=dk;for(var r=0;r<mc;r++)for(var c=0;c<mc;c++)if(q.isDark(r,c))ctx.fillRect((c+mg)*cs,(r+mg)*cs,cs,cs);res(cv.toDataURL('image/png'));}catch(e){rej(e);}});}}
+        };
+      }),
     ]);
   })
   .then(function(){setMsg('กำลังเชื่อมต่อฐานข้อมูล…');})
