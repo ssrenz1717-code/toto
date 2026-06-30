@@ -334,13 +334,15 @@ function loadCache(){
   }catch(e){return false;}
 }
 async function loadFromSupabase(){
+  const ctrl=new AbortController();
+  const abortTimer=setTimeout(()=>ctrl.abort(),42000);
   const[invR,histR,notifR,usersR,auditR]=await Promise.all([
-    sb.from('inventory').select('*').order('mk').order('part'),
-    sb.from('history').select('*').order('date',{ascending:false}).limit(500),
-    sb.from('notifications').select('*').order('date',{ascending:false}).limit(100),
-    sb.from('users').select('*').order('created_at'),
-    sb.from('audit_logs').select('*').order('timestamp',{ascending:false}).limit(200),
-  ]);
+    sb.from('inventory').select('*').order('mk').order('part').abortSignal(ctrl.signal),
+    sb.from('history').select('*').order('date',{ascending:false}).limit(500).abortSignal(ctrl.signal),
+    sb.from('notifications').select('*').order('date',{ascending:false}).limit(100).abortSignal(ctrl.signal),
+    sb.from('users').select('*').order('created_at').abortSignal(ctrl.signal),
+    sb.from('audit_logs').select('*').order('timestamp',{ascending:false}).limit(200).abortSignal(ctrl.signal),
+  ]).finally(()=>clearTimeout(abortTimer));
   if(invR.error)throw new Error('inventory: '+invR.error.message);
   if(usersR.error)throw new Error('users: '+usersR.error.message);
   S.inventory=(invR.data||[]).map(mapInvFromDB);
