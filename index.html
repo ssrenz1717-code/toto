@@ -313,9 +313,10 @@ function showToast(msg,type){
   setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(function(){t.remove();},300);},3500);
 }
 function showLoading(msg){
-  document.getElementById('app').innerHTML='<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg-main)">'
+  document.getElementById('app').innerHTML='<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:var(--bg-main)">'
     +'<div style="width:44px;height:44px;border:3px solid var(--border);border-top-color:#4f46e5;border-radius:50%;animation:spin .8s linear infinite"></div>'
     +'<div style="font-size:14px;font-weight:600;color:var(--text-muted);font-family:\'Sarabun\',sans-serif">'+(msg||'กำลังโหลดข้อมูล…')+'</div>'
+    +'<div id="loading-sub" style="font-size:12px;color:var(--text-faint);font-family:\'Sarabun\',sans-serif;max-width:260px;text-align:center;line-height:1.6"></div>'
     +'</div>';
 }
 const CACHE_KEY='toner-data-v1';
@@ -400,9 +401,14 @@ async function initApp(){
     return;
   }
   showLoading();
-  const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('หมดเวลาเชื่อมต่อ — กรุณาตรวจสอบอินเทอร์เน็ตแล้วโหลดหน้าใหม่')),12000));
+  let _wakeTimer=setTimeout(function(){
+    const sub=document.getElementById('loading-sub');
+    if(sub)sub.textContent='ฐานข้อมูลกำลังปลุกตัว กรุณารอสักครู่… (Supabase free tier ใช้เวลา 30-60 วิ หลังไม่ได้ใช้นาน)';
+  },10000);
+  const timeout=new Promise((_,rej)=>setTimeout(function(){clearTimeout(_wakeTimer);rej(new Error('หมดเวลาเชื่อมต่อ — กรุณาตรวจสอบอินเทอร์เน็ตแล้วโหลดหน้าใหม่'));},45000));
   try{
     await Promise.race([loadFromSupabase(),timeout]);
+    clearTimeout(_wakeTimer);
     await seedIfEmpty();
     saveCache();
     initRealtime();
