@@ -1031,40 +1031,40 @@ function renderLogin(){
   const okHtml=!isReg&&S.regOk?'<div style="font-size:13px;color:#16a34a;background:rgba(220,252,231,.9);border:1px solid #86efac;border-radius:10px;padding:10px 14px;font-weight:500">'+S.regOk+'</div>':'';
   const loginErrHtml=!isReg&&S.loginErr?'<div style="font-size:13px;color:#dc2626;background:rgba(254,226,226,.9);border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;font-weight:500">'+S.loginErr+'</div>':'';
   const eyeStyle='position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-faint);display:flex;padding:0';
-  const eyeBtn='<button id="eye-lp" onclick="togglePassVis('lp','eye-lp','showPass')" style="'+eyeStyle+'">'+(S.showPass?I.eyeoff:I.eye)+'</button>';
-  const eyeBtn2='<button id="eye-rp" onclick="togglePassVis('rp','eye-rp','showPass')" style="'+eyeStyle+'">'+(S.showPass?I.eyeoff:I.eye)+'</button>';
-  const eyeBtn3='<button id="eye-rp2" onclick="togglePassVis('rp2','eye-rp2','showPass2')" style="'+eyeStyle+'">'+(S.showPass2?I.eyeoff:I.eye)+'</button>';
+  const eyeBtn='<button id="eye-lp" onclick="togglePassVis(\'lp\',\'eye-lp\',\'showPass\')" style="'+eyeStyle+'">'+(S.showPass?I.eyeoff:I.eye)+'</button>';
+  const eyeBtn2='<button id="eye-rp" onclick="togglePassVis(\'rp\',\'eye-rp\',\'showPass\')" style="'+eyeStyle+'">'+(S.showPass?I.eyeoff:I.eye)+'</button>';
+  const eyeBtn3='<button id="eye-rp2" onclick="togglePassVis(\'rp2\',\'eye-rp2\',\'showPass2\')" style="'+eyeStyle+'">'+(S.showPass2?I.eyeoff:I.eye)+'</button>';
 
   let formHtml;
   if(isReg){
     formHtml='<div style="display:flex;flex-direction:column;gap:12px">'
       +'<div><label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:5px">ชื่อผู้ใช้ <span style="color:#ef4444">*</span></label>'
-      +'<input id="ru" type="text" value="'+esc(d.u)+'" placeholder="ตัวอักษรภาษาอังกฤษ ตัวเลข" autocomplete="username" oninput="S.regDraft.u=this.value" onkeydown="if(event.key==='Enter')document.getElementById('rn').focus()"/></div>'
+      +'<input id="ru" type="text" value="'+esc(d.u)+'" placeholder="ตัวอักษรภาษาอังกฤษ ตัวเลข" autocomplete="username" oninput="S.regDraft.u=this.value" onkeydown="if(event.key===\'Enter\')document.getElementById(\'rn\').focus()"/></div>'
       +'<div><label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:5px">ชื่อ-นามสกุล <span style="color:#ef4444">*</span></label>'
-      +'<input id="rn" type="text" value="'+esc(d.fn)+'" placeholder="ชื่อที่แสดงในระบบ" oninput="S.regDraft.fn=this.value" onkeydown="if(event.key==='Enter')document.getElementById('re').focus()"/></div>'
+      +'<input id="rn" type="text" value="'+esc(d.fn)+'" placeholder="ชื่อที่แสดงในระบบ" oninput="S.regDraft.fn=this.value" onkeydown="if(event.key===\'Enter\')document.getElementById(\'re\').focus()"/></div>'
       +'<div><label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:5px">อีเมล <span style="color:#ef4444">*</span></label>'
-      +'<input id="re" type="email" value="'+esc(d.em)+'" placeholder="example@company.com" oninput="S.regDraft.em=this.value" onkeydown="if(event.key==='Enter')document.getElementById('rp').focus()"/></div>'
+      +'<input id="re" type="email" value="'+esc(d.em)+'" placeholder="example@company.com" oninput="S.regDraft.em=this.value" onkeydown="if(event.key===\'Enter\')document.getElementById(\'rp\').focus()"/></div>'
       +'<div><label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:5px">รหัสผ่าน <span style="color:#ef4444">*</span></label>'
-      +'<div style="position:relative"><input id="rp" type="'+(S.showPass?'text':'password')+'" value="'+esc(d.p)+'" placeholder="อย่างน้อย 6 ตัวอักษร" style="padding-right:40px" oninput="S.regDraft.p=this.value" onkeydown="if(event.key==='Enter')document.getElementById('rp2').focus()"/>'+eyeBtn2+'</div></div>'
+      +'<div style="position:relative"><input id="rp" type="'+(S.showPass?'text':'password')+'" value="'+esc(d.p)+'" placeholder="อย่างน้อย 6 ตัวอักษร" style="padding-right:40px" oninput="S.regDraft.p=this.value" onkeydown="if(event.key===\'Enter\')document.getElementById(\'rp2\').focus()"/>'+eyeBtn2+'</div></div>'
       +'<div><label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:5px">ยืนยันรหัสผ่าน <span style="color:#ef4444">*</span></label>'
-      +'<div style="position:relative"><input id="rp2" type="'+(S.showPass2?'text':'password')+'" value="'+esc(d.p2)+'" placeholder="กรอกรหัสผ่านอีกครั้ง" style="padding-right:40px" oninput="S.regDraft.p2=this.value" onkeydown="if(event.key==='Enter')doRegister()"/>'+eyeBtn3+'</div></div>'
+      +'<div style="position:relative"><input id="rp2" type="'+(S.showPass2?'text':'password')+'" value="'+esc(d.p2)+'" placeholder="กรอกรหัสผ่านอีกครั้ง" style="padding-right:40px" oninput="S.regDraft.p2=this.value" onkeydown="if(event.key===\'Enter\')doRegister()"/>'+eyeBtn3+'</div></div>'
       +errHtml
-      +'<button onclick="doRegister()" style="width:100%;padding:12px;border-radius:12px;background:#4f46e5;color:#fff;font-size:15px;font-weight:700;cursor:pointer;border:none;margin-top:2px;box-shadow:0 4px 12px rgba(79,70,229,.3);font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">สมัครสมาชิก</button>'
+      +'<button onclick="doRegister()" style="width:100%;padding:12px;border-radius:12px;background:#4f46e5;color:#fff;font-size:15px;font-weight:700;cursor:pointer;border:none;margin-top:2px;box-shadow:0 4px 12px rgba(79,70,229,.3);font-family:\'Sarabun\',sans-serif" onmouseover="this.style.background=\'#4338ca\'" onmouseout="this.style.background=\'#4f46e5\'">สมัครสมาชิก</button>'
       +'<div style="font-size:12px;color:var(--text-faint);background:var(--surface2);border-radius:8px;padding:8px 12px">บัญชีใหม่จะเป็นผู้ชมก่อน หากต้องการแก้สต็อกให้ Admin ปรับสิทธิ์ให้</div>'
       +'</div>';
   } else {
     formHtml='<div style="display:flex;flex-direction:column;gap:14px">'
       +'<div><label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">ชื่อผู้ใช้</label>'
-      +'<input id="lu" type="text" value="'+esc(remUser)+'" placeholder="กรอกชื่อผู้ใช้" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('lp').focus()"/></div>'
+      +'<input id="lu" type="text" value="'+esc(remUser)+'" placeholder="กรอกชื่อผู้ใช้" autocomplete="username" onkeydown="if(event.key===\'Enter\')document.getElementById(\'lp\').focus()"/></div>'
       +'<div><label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">รหัสผ่าน</label>'
-      +'<div style="position:relative"><input id="lp" type="'+(S.showPass?'text':'password')+'" value="'+esc(remPass)+'" placeholder="กรอกรหัสผ่าน" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" style="padding-right:40px"/>'+eyeBtn+'</div></div>'
+      +'<div style="position:relative"><input id="lp" type="'+(S.showPass?'text':'password')+'" value="'+esc(remPass)+'" placeholder="กรอกรหัสผ่าน" autocomplete="current-password" onkeydown="if(event.key===\'Enter\')doLogin()" style="padding-right:40px"/>'+eyeBtn+'</div></div>'
       +'<div style="display:flex;align-items:center;justify-content:space-between">'
       +'<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text-secondary);font-weight:500">'
       +'<input id="remember-me" type="checkbox" '+(remChecked?'checked':'')+' style="width:16px;height:16px;accent-color:#4f46e5;cursor:pointer"/> จำรหัสผ่าน</label>'
-      +'<button onclick="showForgotPassword()" style="font-size:13px;color:#4f46e5;background:none;border:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-weight:600;padding:0" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">ลืมรหัสผ่าน?</button>'
+      +'<button onclick="showForgotPassword()" style="font-size:13px;color:#4f46e5;background:none;border:none;cursor:pointer;font-family:\'Sarabun\',sans-serif;font-weight:600;padding:0" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">ลืมรหัสผ่าน?</button>'
       +'</div>'
       +loginErrHtml+okHtml
-      +'<button onclick="doLogin()" style="width:100%;padding:12px;border-radius:12px;background:#4f46e5;color:#fff;font-size:15px;font-weight:700;cursor:pointer;border:none;margin-top:4px;box-shadow:0 4px 12px rgba(79,70,229,.3);font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">เข้าสู่ระบบ</button>'
+      +'<button onclick="doLogin()" style="width:100%;padding:12px;border-radius:12px;background:#4f46e5;color:#fff;font-size:15px;font-weight:700;cursor:pointer;border:none;margin-top:4px;box-shadow:0 4px 12px rgba(79,70,229,.3);font-family:\'Sarabun\',sans-serif" onmouseover="this.style.background=\'#4338ca\'" onmouseout="this.style.background=\'#4f46e5\'">เข้าสู่ระบบ</button>'
       +'</div>';
   }
 
@@ -1093,8 +1093,8 @@ function renderLogin(){
     +'<div style="font-size:13px;color:#64748b;margin-top:4px">'+(isReg?'สร้างบัญชีใหม่':'เข้าสู่ระบบเพื่อดำเนินการต่อ')+'</div>'
     +'</div>'
     +'<div style="display:flex;border-radius:10px;background:#f1f5f9;padding:3px;gap:3px;margin-bottom:20px">'
-    +'<button onclick="S.mode='login';S.loginErr='';S.regErr='';renderLogin()" style="flex:1;padding:8px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all .15s;background:'+(isReg?'none':'#fff')+';color:'+(isReg?'#94a3b8':'#4f46e5')+';box-shadow:'+(isReg?'none':'0 1px 3px rgba(0,0,0,.08)')+'">เข้าสู่ระบบ</button>'
-    +'<button onclick="S.mode='register';S.loginErr='';S.regErr='';renderLogin()" style="flex:1;padding:8px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all .15s;background:'+(isReg?'#fff':'none')+';color:'+(isReg?'#4f46e5':'#94a3b8')+';box-shadow:'+(isReg?'0 1px 3px rgba(0,0,0,.08)':'none')+'">สมัครสมาชิก</button>'
+    +'<button onclick="S.mode=\'login\';S.loginErr=\'\';S.regErr=\'\';renderLogin()" style="flex:1;padding:8px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Sarabun\',sans-serif;transition:all .15s;background:'+(isReg?'none':'#fff')+';color:'+(isReg?'#94a3b8':'#4f46e5')+';box-shadow:'+(isReg?'none':'0 1px 3px rgba(0,0,0,.08)')+'">เข้าสู่ระบบ</button>'
+    +'<button onclick="S.mode=\'register\';S.loginErr=\'\';S.regErr=\'\';renderLogin()" style="flex:1;padding:8px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Sarabun\',sans-serif;transition:all .15s;background:'+(isReg?'#fff':'none')+';color:'+(isReg?'#4f46e5':'#94a3b8')+';box-shadow:'+(isReg?'0 1px 3px rgba(0,0,0,.08)':'none')+'">สมัครสมาชิก</button>'
     +'</div>'
     +formHtml
     +'</div></div>'
