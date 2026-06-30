@@ -187,6 +187,7 @@ const MS_TEAMS_WEBHOOKS={
   '330AC': '',   // เครื่องเล็ก — วาง Incoming Webhook URL ของช่อง Teams ที่นี่
   '2521AC': '',  // เครื่องใหญ่ — วาง Incoming Webhook URL ของช่อง Teams ที่นี่
 };
+const DAILY_REPORT_WEBHOOK=''; // Webhook สำหรับรายงานประจำวัน (ถ้าว่างจะใช้ webhook แรกที่มีค่าจาก MS_TEAMS_WEBHOOKS)
 
 // ─── ICONS ───────────────────────────────────────────────────
 const I={
@@ -389,7 +390,7 @@ async function initApp(){
   if(hasCached){
     restoreSession();
     render();
-    loadFromSupabase().then(()=>{saveCache();renderContent();}).catch(()=>{});
+    loadFromSupabase().then(()=>{saveCache();renderContent();if(S.user)checkDailyVerification();}).catch(()=>{});
     initRealtime();
     return;
   }
@@ -411,6 +412,7 @@ async function initApp(){
     return;
   }
   render();
+  if(S.user)checkDailyVerification();
 }
 
 // ─── UTILS ────────────────────────────────────────────────────
@@ -529,6 +531,114 @@ async function sendTeamsAlert(title,message,statusType,webhookUrl){
   }catch(e){
     console.error('[TeamsAlert] webhook failed:',e);
   }
+}
+// ─── DAILY STOCK REPORT & VERIFICATION ───────────────────────
+function getDailyReportWebhook(){
+  return DAILY_REPORT_WEBHOOK||Object.values(MS_TEAMS_WEBHOOKS).find(v=>v)||'';
+}
+async function sendDailyStockReport(webhookUrl){
+  if(!webhookUrl)return;
+  const inv=S.inventory;
+  const out=inv.filter(i=>status(i)==='OUT_OF_STOCK');
+  const crit=inv.filter(i=>status(i)==='CRITICAL');
+  const low=inv.filter(i=>status(i)==='LOW');
+  const norm=inv.filter(i=>status(i)==='NORMAL');
+  const fmtItem=i=>`${i.name} (${i.mk}) — ${i.qty}/${i.maxQty} กล่อง`;
+  const lines=[];
+  if(out.length)lines.push('🔴 หมดแล้ว ('+out.length+' รายการ): '+out.map(fmtItem).join(' | '));
+  if(crit.length)lines.push('🟠 วิกฤต ('+crit.length+' รายการ): '+crit.map(fmtItem).join(' | '));
+  if(low.length)lines.push('🟡 ใกล้หมด ('+low.length+' รายการ): '+low.map(fmtItem).join(' | '));
+  if(norm.length)lines.push('🟢 ปกติ ('+norm.length+' รายการ): '+norm.map(fmtItem).join(' | '));
+  const body=lines.join('\n\n');
+  const payload={
+    '@type':'MessageCard',
+    '@context':'http://schema.org/extensions',
+    themeColor:'4f46e5',
+    summary:'รายงานสต็อกหมึกประจำวัน',
+    sections:[{
+      activityTitle:'📋 รายงานสต็อกหมึกพิมพ์ประจำวัน',
+      activitySubtitle:'TonerTrack · '+new Date().toLocaleDateString('th-TH',{weekday:'long',year:'numeric',month:'long',day:'numeric'}),
+      activityText:body||'ไม่มีข้อมูลสต็อก',
+      facts:[
+        {name:'ทั้งหมด',value:inv.length+' รายการ'},
+        {name:'🔴 หมดแล้ว',value:out.length+' รายการ'},
+        {name:'🟠 วิกฤต',value:crit.length+' รายการ'},
+        {name:'🟡 ใกล้หมด',value:low.length+' รายการ'},
+        {name:'🟢 ปกติ',value:norm.length+' รายการ'},
+        {name:'ยืนยันโดย',value:S.user?.fullName||'System'},
+        {name:'เวลา',value:new Date().toLocaleString('th-TH')},
+      ],
+      markdown:false,
+    }],
+  };
+  try{
+    await fetch(webhookUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  }catch(e){
+    console.error('[DailyReport] webhook failed:',e);
+  }
+}
+async function checkDailyVerification(){
+  if(!S.user||!canEditInventory())return;
+  const today=new Date().toLocaleDateString();
+  const cached=S.history.find(h=>h.ct==='DAILY_CHECK'&&new Date(h.date).toLocaleDateString()===today);
+  if(cached)return;
+  try{
+    const start=new Date();start.setHours(0,0,0,0);
+    const{data}=await sb.from('history').select('id').eq('ct','DAILY_CHECK').gte('date',start.toISOString()).limit(1);
+    if(data&&data.length>0)return;
+  }catch(e){}
+  showDailyCheckModal();
+}
+function showDailyCheckModal(){
+  const inv=S.inventory;
+  const out=inv.filter(i=>status(i)==='OUT_OF_STOCK').length;
+  const crit=inv.filter(i=>status(i)==='CRITICAL').length;
+  const low=inv.filter(i=>status(i)==='LOW').length;
+  const norm=inv.filter(i=>status(i)==='NORMAL').length;
+  _openModal(`
+  <div class="modal-bg" onclick="if(event.target===this)closeModal()" role="dialog" aria-modal="true" aria-label="ตรวจสอบสต็อกประจำวัน">
+    <div class="card fade-up" style="width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden">
+      <div style="height:4px;background:linear-gradient(90deg,#4f46e5,#7c3aed)"></div>
+      <div style="padding:24px 24px 20px">
+        <div style="text-align:center;margin-bottom:20px">
+          <div style="font-size:36px;margin-bottom:8px">📋</div>
+          <div style="font-size:17px;font-weight:700;color:var(--text-primary)">ตรวจสอบสต็อกประจำวัน</div>
+          <div style="font-size:12px;color:var(--text-faint);margin-top:4px">${new Date().toLocaleDateString('th-TH',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+        </div>
+        <div style="background:var(--surface3);border-radius:12px;padding:16px;margin-bottom:16px">
+          <div style="font-size:11px;font-weight:700;color:var(--text-faint);margin-bottom:10px;text-transform:uppercase;letter-spacing:.6px">สรุปสต็อกปัจจุบัน</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div style="background:#fef2f2;border-radius:8px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:800;color:#dc2626">${out}</div><div style="font-size:11px;color:#991b1b;margin-top:2px">🔴 หมดแล้ว</div></div>
+            <div style="background:#fff7ed;border-radius:8px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:800;color:#ea580c">${crit}</div><div style="font-size:11px;color:#9a3412;margin-top:2px">🟠 วิกฤต</div></div>
+            <div style="background:#fefce8;border-radius:8px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:800;color:#ca8a04">${low}</div><div style="font-size:11px;color:#713f12;margin-top:2px">🟡 ใกล้หมด</div></div>
+            <div style="background:#f0fdf4;border-radius:8px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:800;color:#16a34a">${norm}</div><div style="font-size:11px;color:#14532d;margin-top:2px">🟢 ปกติ</div></div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text-faint);text-align:center;margin-bottom:20px;line-height:1.7">กรุณาตรวจสอบสต็อกหมึกพิมพ์ในวันนี้แล้วกดยืนยัน<br>ระบบจะบันทึกและส่งรายงานไปยัง Microsoft Teams</div>
+        <div style="display:flex;gap:10px">
+          <button onclick="closeModal()" style="flex:1;padding:11px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='var(--surface3)'" onmouseout="this.style.background='var(--surface)'">ปิด (ทำในภายหลัง)</button>
+          <button onclick="confirmDailyStock()" style="flex:1;padding:11px;border-radius:10px;background:#4f46e5;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">✅ ยืนยันสต็อกประจำวัน</button>
+        </div>
+      </div>
+    </div>
+  </div>`);
+}
+async function confirmDailyStock(){
+  closeModal();
+  const h={id:uid(),iid:'SYSTEM',name:'ตรวจสอบสต็อกประจำวัน',mk:'',color:'BLACK',oq:0,nq:0,ct:'DAILY_CHECK',reason:'ตรวจสอบสต็อกประจำวัน',user:S.user?.fullName||'System',date:new Date().toISOString()};
+  S.history.unshift(h);
+  try{await sb.from('history').insert(mapHistToDB(h));}catch(e){console.error('[DailyCheck]',e);}
+  showToast('ยืนยันสต็อกประจำวันสำเร็จ ✅');
+  const hook=getDailyReportWebhook();
+  if(hook){await sendDailyStockReport(hook);showToast('ส่งรายงานไปยัง Teams แล้ว 📢');}
+  else showToast('ไม่มี Webhook URL — ข้ามการส่ง Teams','warn');
+}
+async function manualSendStockReport(){
+  const hook=getDailyReportWebhook();
+  if(!hook){showToast('กรุณาตั้งค่า DAILY_REPORT_WEBHOOK หรือ MS_TEAMS_WEBHOOKS ก่อน','error');return;}
+  showToast('กำลังส่งรายงานสต็อกไปยัง Teams…');
+  await sendDailyStockReport(hook);
+  showToast('ส่งรายงานสต็อกไปยัง Teams สำเร็จ 📢');
 }
 function stats(){const v=S.inventory;return{total:v.length,normal:v.filter(i=>status(i)==='NORMAL').length,low:v.filter(i=>status(i)==='LOW').length,critical:v.filter(i=>status(i)==='CRITICAL').length,outOfStock:v.filter(i=>status(i)==='OUT_OF_STOCK').length,today:S.history.filter(h=>new Date(h.date)>new Date(new Date().setHours(0,0,0,0))).length};}
 function pct(qty,max){return max>0?Math.min(100,Math.round(qty/max*100)):0;}
@@ -743,9 +853,9 @@ function onScanSuccess(decodedText){
   const item=S.inventory.find(function(i){
     if(i.id===code)return true;
     const nb=norm(i.barcode);const np=norm(i.part);
-    return(nb&&(nb===nc||nc.includes(nb)||nb.includes(nc)))||(np&&(np===nc||nc.includes(np)||np.includes(nc)));
+    return(nb&&nb===nc)||(np&&np===nc);
   });
-  if(!item){showToast('ไม่พบ: "'+code+'" — ตรวจสอบรหัสบาร์โค้ด','error');return;}
+  if(!item){showToast('ไม่พบบาร์โค้ด: "'+code+'"','error');return;}
   if(physicalScanMode==='OUT'&&item.qty===0){showToast('หมึกหมดแล้ว ไม่สามารถเบิกได้','error');return;}
   _scanCooldown=true;
   const newQty=physicalScanMode==='OUT'?item.qty-1:item.qty+1;
@@ -1004,7 +1114,7 @@ async function confirmAddItem(){
   if(saveBtn){saveBtn.textContent='กำลังบันทึก…';saveBtn.disabled=true;}
   const nu={id:uid(),name,model,mk,color:g('ai-color')||'BLACK',type:g('ai-type')||'TONER',part:g('ai-part'),qty,min:mn,critical:crit,max:mx,loc:g('ai-loc'),sup:g('ai-sup'),remarks:'',updatedAt:new Date().toISOString()};
   const{error}=await sb.from('inventory').insert(mapInvToDB(nu));
-  if(error){
+  if(error){ 
     showErr('บันทึกไม่สำเร็จ: '+error.message);
     if(saveBtn){saveBtn.textContent='+ เพิ่มรายการ';saveBtn.disabled=false;}
     return;
@@ -1120,7 +1230,7 @@ function doLogin(){
   if(S.auditLogs.length>200)S.auditLogs=S.auditLogs.slice(0,200);
   sb.from('audit_logs').insert(mapAuditToDB(log));
   S.user=user;S.page='dashboard';S.loginErr='';S.regOk='';
-  saveSession();render();
+  saveSession();render();setTimeout(checkDailyVerification,600);
 }
 function showForgotPassword(){
   const modal=document.createElement('div');
@@ -1422,6 +1532,7 @@ function renderDashboard(){
         <span style="font-size:12px;color:var(--text-faint);margin-left:8px">แสดง ${items.length} จาก ${S.inventory.length} รายการ</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <button onclick="manualSendStockReport()" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:#ede9fe;border:1px solid #c4b5fd;color:#4f46e5;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;white-space:nowrap" title="ส่งรายงานสต็อกไปยัง Microsoft Teams">📢 ส่งรายงานสต็อก</button>
         ${canEditInventory()?`<button id="scan-mode-toggle" onclick="togglePhysicalScanMode()" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:#fee2e2;border:1px solid #fca5a5;color:#dc2626;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;white-space:nowrap">📤 โหมด: เบิกออก</button>`:''}
         <div style="position:relative">
           <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-faint)">${I.search}</span>
