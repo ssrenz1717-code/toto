@@ -143,10 +143,11 @@ body.compact input,body.compact select,body.compact textarea{font-size:13px;padd
 </style>
 </head>
 <body>
-<div id="app"><div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#f0f4f8"><div style="width:44px;height:44px;border:3px solid #e2e8f0;border-top-color:#4f46e5;border-radius:50%;animation:spin .8s linear infinite"></div><div style="font-size:14px;font-weight:600;color:#64748b;font-family:'Sarabun',sans-serif">กำลังโหลด…</div></div></div>
+<div id="app"><div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#f0f4f8"><div style="width:44px;height:44px;border:3px solid #e2e8f0;border-top-color:#4f46e5;border-radius:50%;animation:spin .8s linear infinite"></div><div id="loading-msg" style="font-size:14px;font-weight:600;color:#64748b;font-family:'Sarabun',sans-serif">กำลังโหลดระบบ…</div></div></div>
 <script>
 (function(){
-var CDN_TIMEOUT=15000;
+var CDN_TIMEOUT=6000;
+function setMsg(t){var el=document.getElementById('loading-msg');if(el)el.textContent=t;}
 function loadScript(src){
   return new Promise(function(res,rej){
     var el=document.createElement('script');
@@ -159,22 +160,28 @@ function loadScript(src){
 function loadWithFallback(urls){
   return urls.reduce(function(p,url){return p.catch(function(){return loadScript(url);});},Promise.reject());
 }
+function loadOptional(urls){return loadWithFallback(urls).catch(function(){return null;});}
+setMsg('กำลังโหลด Supabase…');
 window._cdnLoad=loadWithFallback([
     'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js',
     'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js',
   ])
-  .then(function(){return Promise.all([
-    loadWithFallback([
-      'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/minified/html5-qrcode.min.js',
-      'https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js',
-    ]),
-    loadWithFallback([
-      'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
-      'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js',
-    ]),
-  ]);})
+  .then(function(){
+    setMsg('กำลังโหลด QR library…');
+    return Promise.all([
+      loadOptional([
+        'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/minified/html5-qrcode.min.js',
+        'https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js',
+      ]),
+      loadOptional([
+        'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
+        'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js',
+      ]),
+    ]);
+  })
+  .then(function(){setMsg('กำลังเชื่อมต่อฐานข้อมูล…');})
   .catch(function(){
-    document.getElementById('app').innerHTML='<div style="padding:30px;font-family:\'Sarabun\',sans-serif;color:#dc2626;background:#fee2e2;margin:20px;border-radius:12px;font-size:14px"><b>โหลดระบบไม่สำเร็จ</b><br><br>CDN ทั้งหมดเชื่อมต่อไม่ได้<br><br><small>กรุณาตรวจสอบสัญญาณอินเทอร์เน็ต แล้วกด "ลองใหม่"</small><br><br><button onclick="location.reload()" style="margin-top:8px;padding:8px 16px;background:#dc2626;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">ลองใหม่</button></div>';
+    document.getElementById('app').innerHTML='<div style="padding:30px;font-family:\'Sarabun\',sans-serif;color:#dc2626;background:#fee2e2;margin:20px;border-radius:12px;font-size:14px"><b>โหลดระบบไม่สำเร็จ</b><br><br>เชื่อมต่อ CDN ไม่ได้ (ลอง jsdelivr และ unpkg แล้ว)<br><br><small>กรุณาตรวจสอบสัญญาณอินเทอร์เน็ต หรือ VPN แล้วกด "ลองใหม่"</small><br><br><button onclick="location.reload()" style="margin-top:8px;padding:8px 16px;background:#dc2626;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">ลองใหม่</button></div>';
     window._cdnFailed=true;
   });
 })();
@@ -269,7 +276,7 @@ function defNotifs(){return[
 // users     : id,username,password,full_name,email,role,created_at,last_login
 // audit_logs: id,username,full_name,role,timestamp
 function mapInvFromDB(r){return{id:r.id,name:r.name,model:r.model,mk:r.mk,color:r.color,type:r.type,part:r.part,qty:r.qty,min:r.min??3,critical:r.critical??1,max:r.max??10,loc:r.loc||'',sup:r.sup||'',remarks:r.remarks||'',barcode:r.barcode||'',updatedAt:r.updated_at};}
-function mapInvToDB(i){return{id:i.id,name:i.name,modแel:i.model,mk:i.mk,color:i.color,type:i.type,part:i.part,qty:i.qty,min:i.min,critical:i.critical,max:i.max,loc:i.loc||null,sup:i.sup||null,remarks:i.remarks||null,barcode:i.barcode||null,updated_at:i.updatedAt||new Date().toISOString()};}
+function mapInvToDB(i){return{id:i.id,name:i.name,model:i.model,mk:i.mk,color:i.color,type:i.type,part:i.part,qty:i.qty,min:i.min,critical:i.critical,max:i.max,loc:i.loc||null,sup:i.sup||null,remarks:i.remarks||null,barcode:i.barcode||null,updated_at:i.updatedAt||new Date().toISOString()};}
 function mapHistFromDB(r){return{id:r.id,iid:r.iid,name:r.name,mk:r.mk,color:r.color,oq:r.oq,nq:r.nq,ct:r.ct,reason:r.reason,user:r.user_name??'System',date:r.date};}
 function mapHistToDB(h){return{id:h.id,iid:h.iid,name:h.name,mk:h.mk,color:h.color,oq:h.oq,nq:h.nq,ct:h.ct,reason:h.reason||null,user_name:h.user,date:h.date};}
 function mapNotifFromDB(r){return{id:r.id,type:r.type,title:r.title,msg:r.msg,read:r.is_read,date:r.date};}
@@ -458,7 +465,7 @@ function cycleScale(){
   const labels={'auto':'อัตโนมัติ','desktop':'คอม','mobile':'มือถือ'};
   showToast('ขนาดหน้าจอ: '+labels[S.scale]);
   const btn=document.getElementById('btn-scale');
-  if(btn)btn.innerHTML=S.scale==='mobile'?I.phone:S.scale==='desktop'?I.monitor:I.phone;
+  if(btn)btn.innerHTML=S.scale==='mobile'?I.phone:S.scale==='desktop'?I.monitor:(window.innerWidth<768?I.phone:I.monitor);
 }
 function toggleSidebar(){
   S.sidebarOpen=!S.sidebarOpen;
@@ -761,6 +768,7 @@ function onScanSuccess(decodedText){
   setTimeout(function(){isProcessingScan=false;},2000);
 }
 async function startScanner(){
+  if(typeof Html5Qrcode==='undefined'){showToast('ฟีเจอร์สแกน QR ไม่พร้อมใช้งาน (CDN โหลดไม่สำเร็จ)','error');closeModal();return;}
   const qr=new Html5Qrcode('reader');
   html5QrcodeInstance=qr;
   const cfg={fps:30,qrbox:function(w,h){return{width:Math.min(w*0.92,360),height:100};},aspectRatio:1.7778,useBarCodeDetectorIfSupported:true};
