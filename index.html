@@ -160,34 +160,22 @@ function loadScript(src){
 function loadWithFallback(urls){
   return urls.reduce(function(p,url){return p.catch(function(){return loadScript(url);});},Promise.reject());
 }
-function loadOptional(urls){return loadWithFallback(urls).catch(function(){return null;});}
 setMsg('กำลังโหลด Supabase…');
 window._cdnLoad=loadWithFallback([
     'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js',
     'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js',
   ])
-  .then(function(){
-    setMsg('กำลังโหลด QR library…');
-    return Promise.all([
-      loadOptional([
-        '/html5-qrcode.min.js',
-        'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
-      ]),
-      loadOptional([
-        '/qrcode-gen.js',
-        'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js',
-      ]).then(function(){
-        if(typeof qrcode!=='undefined'&&typeof QRCode==='undefined'){
-          window.QRCode={toDataURL:function(text,opts){return new Promise(function(res,rej){try{var sz=(opts&&opts.width)||200,mg=(opts&&opts.margin!=null?opts.margin:4),ec=((opts&&opts.errorCorrectionLevel)||'M').charAt(0).toUpperCase(),dk=(opts&&opts.color&&opts.color.dark)||'#000000',lt=(opts&&opts.color&&opts.color.light)||'#ffffff',q=qrcode(0,ec);q.addData(text);q.make();var mc=q.getModuleCount(),cs=Math.floor(sz/(mc+2*mg)),as=cs*(mc+2*mg),cv=document.createElement('canvas');cv.width=as;cv.height=as;var ctx=cv.getContext('2d');ctx.fillStyle=lt;ctx.fillRect(0,0,as,as);ctx.fillStyle=dk;for(var r=0;r<mc;r++)for(var c=0;c<mc;c++)if(q.isDark(r,c))ctx.fillRect((c+mg)*cs,(r+mg)*cs,cs,cs);res(cv.toDataURL('image/png'));}catch(e){rej(e);}});}}
-        };
-      }),
-    ]);
-  })
   .then(function(){setMsg('กำลังเชื่อมต่อฐานข้อมูล…');})
   .catch(function(){
     document.getElementById('app').innerHTML='<div style="padding:30px;font-family:\'Sarabun\',sans-serif;color:#dc2626;background:#fee2e2;margin:20px;border-radius:12px;font-size:14px"><b>โหลดระบบไม่สำเร็จ</b><br><br>เชื่อมต่อ CDN ไม่ได้ (ลอง jsdelivr และ unpkg แล้ว)<br><br><small>กรุณาตรวจสอบสัญญาณอินเทอร์เน็ต หรือ VPN แล้วกด "ลองใหม่"</small><br><br><button onclick="location.reload()" style="margin-top:8px;padding:8px 16px;background:#dc2626;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">ลองใหม่</button></div>';
     window._cdnFailed=true;
   });
+// Non-blocking: load qrcode-generator for print QR labels feature
+loadScript('https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js').then(function(){
+  if(typeof qrcode!=='undefined'&&typeof QRCode==='undefined'){
+    window.QRCode={toDataURL:function(text,opts){return new Promise(function(res,rej){try{var sz=(opts&&opts.width)||200,mg=(opts&&opts.margin!=null?opts.margin:4),ec=((opts&&opts.errorCorrectionLevel)||'M').charAt(0).toUpperCase(),dk=(opts&&opts.color&&opts.color.dark)||'#000000',lt=(opts&&opts.color&&opts.color.light)||'#ffffff',q=qrcode(0,ec);q.addData(text);q.make();var mc=q.getModuleCount(),cs=Math.floor(sz/(mc+2*mg)),as=cs*(mc+2*mg),cv=document.createElement('canvas');cv.width=as;cv.height=as;var ctx=cv.getContext('2d');ctx.fillStyle=lt;ctx.fillRect(0,0,as,as);ctx.fillStyle=dk;for(var r=0;r<mc;r++)for(var c=0;c<mc;c++)if(q.isDark(r,c))ctx.fillRect((c+mg)*cs,(r+mg)*cs,cs,cs);res(cv.toDataURL('image/png'));}catch(e){rej(e);}});}};
+  }
+}).catch(function(){});
 })();
 </script>
 <script>
@@ -295,9 +283,8 @@ let S={page:'login',mode:'login',user:null,sidebarOpen:true,notifOpen:false,filt
 let searchTimer=null;
 let searchComposing=false;
 let _prevFocus=null;
-let scanMode='OUT';
-let html5QrcodeInstance=null;
-let isProcessingScan=false;
+let physicalScanMode='OUT';
+let _scanCooldown=false;
 function _openModal(html){
   _prevFocus=document.activeElement;
   document.getElementById('modal-root').innerHTML=html;
@@ -733,131 +720,79 @@ function closeModal(){
   _prevFocus=null;
 }
 
-// ─── SCANNER ──────────────────────────────────────────────────
-function setScanMode(mode){
-  scanMode=mode;
-  const outBtn=document.getElementById('scan-btn-out');
-  const inBtn=document.getElementById('scan-btn-in');
-  if(!outBtn||!inBtn)return;
-  if(mode==='OUT'){
-    outBtn.style.background='#dc2626';outBtn.style.color='#fff';outBtn.style.borderColor='#dc2626';
-    inBtn.style.background='var(--surface2)';inBtn.style.color='var(--text-muted)';inBtn.style.borderColor='var(--border)';
-  } else {
-    inBtn.style.background='#16a34a';inBtn.style.color='#fff';inBtn.style.borderColor='#16a34a';
-    outBtn.style.background='var(--surface2)';outBtn.style.color='var(--text-muted)';outBtn.style.borderColor='var(--border)';
-  }
-  const label=document.getElementById('scan-mode-label');
-  if(label){
-    label.textContent=mode==='OUT'?'โหมด: เบิกออก (ใช้หมึก)':'โหมด: รับเข้า (เติมสต็อก)';
-    label.style.color=mode==='OUT'?'#dc2626':'#16a34a';
+// ─── SCANNER (Physical Barcode Scanner / Keyboard Wedge) ────────
+function togglePhysicalScanMode(){
+  physicalScanMode=physicalScanMode==='OUT'?'IN':'OUT';
+  const btn=document.getElementById('scan-mode-toggle');
+  if(btn){
+    if(physicalScanMode==='OUT'){
+      btn.textContent='📤 โหมด: เบิกออก';
+      btn.style.background='#fee2e2';btn.style.color='#dc2626';btn.style.borderColor='#fca5a5';
+    } else {
+      btn.textContent='📥 โหมด: รับเข้า';
+      btn.style.background='#dcfce7';btn.style.color='#16a34a';btn.style.borderColor='#86efac';
+    }
   }
 }
 function onScanSuccess(decodedText){
   const code=decodedText.trim();
-  const dbg=document.getElementById('scan-debug');
-  if(dbg){dbg.textContent='อ่านได้: '+code;dbg.style.color='#16a34a';dbg.style.fontWeight='700';}
-  if(isProcessingScan)return;
+  if(!code)return;
+  if(_scanCooldown)return;
   const norm=function(s){return(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');};
   const nc=norm(code);
   const item=S.inventory.find(function(i){
-    if(i.id===code)return true; // QR ที่พิมพ์จากแอป
+    if(i.id===code)return true;
     const nb=norm(i.barcode);const np=norm(i.part);
     return(nb&&(nb===nc||nc.includes(nb)||nb.includes(nc)))||(np&&(np===nc||nc.includes(np)||np.includes(nc)));
   });
-  if(!item){
-    const dbg2=document.getElementById('scan-debug');
-    if(dbg2){dbg2.textContent='ไม่พบ: '+code;dbg2.style.color='#dc2626';}
-    showToast('ไม่พบ: "'+code+'" — ลองป้อนรหัสด้วยตนเองด้านล่าง','error');return;
-  }
-  if(scanMode==='OUT'&&item.qty===0){showToast('หมึกหมดแล้ว ไม่สามารถเบิกได้','error');return;}
-  isProcessingScan=true;
-  const newQty=scanMode==='OUT'?item.qty-1:item.qty+1;
-  const actionType=scanMode==='OUT'?'DECREASE':'INCREASE';
-  const reason=scanMode==='OUT'?'สแกนออก (ใช้หมึก)':'สแกนเข้า (เติมสต็อก)';
+  if(!item){showToast('ไม่พบ: "'+code+'" — ตรวจสอบรหัสบาร์โค้ด','error');return;}
+  if(physicalScanMode==='OUT'&&item.qty===0){showToast('หมึกหมดแล้ว ไม่สามารถเบิกได้','error');return;}
+  _scanCooldown=true;
+  const newQty=physicalScanMode==='OUT'?item.qty-1:item.qty+1;
+  const actionType=physicalScanMode==='OUT'?'DECREASE':'INCREASE';
+  const reason=physicalScanMode==='OUT'?'สแกนออก (ใช้หมึก)':'สแกนเข้า (เติมสต็อก)';
   applyQtyChange(item.id,newQty,reason,actionType);
-  const verb=scanMode==='OUT'?'เบิกออก':'รับเข้า';
+  const verb=physicalScanMode==='OUT'?'เบิกออก':'รับเข้า';
   showToast(verb+' '+item.name+' ('+item.mk+') เหลือ '+newQty+' กล่อง','ok');
-  setTimeout(function(){isProcessingScan=false;},2000);
+  setTimeout(function(){_scanCooldown=false;},2000);
 }
-async function startScanner(){
-  if(typeof Html5Qrcode==='undefined'){showToast('ฟีเจอร์สแกน QR ไม่พร้อมใช้งาน (CDN โหลดไม่สำเร็จ)','error');closeModal();return;}
-  const qr=new Html5Qrcode('reader');
-  html5QrcodeInstance=qr;
-  const cfg={fps:30,qrbox:function(w,h){return{width:Math.min(w*0.92,360),height:100};},aspectRatio:1.7778,useBarCodeDetectorIfSupported:true};
-  // Try camera ID first (more compatible with iOS Safari)
-  try{
-    const cameras=await Html5Qrcode.getCameras();
-    if(cameras&&cameras.length){
-      const back=cameras.find(function(c){return/back|rear|environment/i.test(c.label);})||cameras[cameras.length-1];
-      try{await qr.start(back.id,cfg,onScanSuccess,function(){});return;}catch(e){}
+// Global physical barcode scanner listener (keyboard wedge)
+(function(){
+  var buf='';
+  var lastKey=0;
+  var clearTimer=null;
+  var SPEED_THRESHOLD=50; // ms — faster than this = scanner, slower = human
+  var MIN_LEN=3;          // minimum barcode length to act on
+  document.addEventListener('keydown',function(e){
+    // Skip if focus is in a text field
+    var tag=(document.activeElement||{}).tagName||'';
+    if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return;
+    var now=Date.now();
+    var delta=now-lastKey;
+    lastKey=now;
+    if(e.key==='Enter'){
+      var code=buf;
+      buf='';
+      if(clearTimer){clearTimeout(clearTimer);clearTimer=null;}
+      if(code.length>=MIN_LEN&&delta<SPEED_THRESHOLD*4){
+        if(!canEditInventory()){showToast('ต้องใช้สิทธิ์ Staff หรือ Admin เพื่อสแกน','error');return;}
+        onScanSuccess(code);
+      }
+      return;
     }
-  }catch(e){}
-  // Fallback: facingMode constraints
-  try{
-    await qr.start({facingMode:{exact:'environment'}},cfg,onScanSuccess,function(){});
-  }catch(e1){
-    try{
-      await qr.start({facingMode:'environment'},cfg,onScanSuccess,function(){});
-    }catch(e2){
-      html5QrcodeInstance=null;
-      showToast('ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการเข้าถึงกล้องในการตั้งค่า','error');
+    if(e.key.length===1){
+      // Only accumulate if keystrokes are scanner-speed (or first char)
+      if(buf.length===0||delta<SPEED_THRESHOLD){
+        buf+=e.key;
+      } else {
+        // Human-speed keystroke — reset buffer
+        buf=e.key;
+      }
+      if(clearTimer)clearTimeout(clearTimer);
+      clearTimer=setTimeout(function(){buf='';clearTimer=null;},300);
     }
-  }
-}
-function openScanner(){
-  if(!canEditInventory()){showToast('ต้องใช้สิทธิ์ Staff หรือ Admin','error');return;}
-  scanMode='OUT';isProcessingScan=false;
-  _openModal(`
-  <div class="modal-bg" onclick="if(event.target===this)closeScanner()" role="dialog" aria-modal="true" aria-label="สแกน QR / Barcode">
-    <div class="card fade-up" style="width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.18);overflow:hidden">
-      <div style="height:4px;background:linear-gradient(90deg,#dc2626,#16a34a)"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border2)">
-        <div>
-          <div style="font-size:15px;font-weight:700;color:var(--text-primary)">📷 สแกน QR / Barcode</div>
-          <div id="scan-mode-label" style="font-size:12px;font-weight:600;color:#dc2626;margin-top:2px">โหมด: เบิกออก (ใช้หมึก)</div>
-        </div>
-        <button onclick="closeScanner()" class="icon-btn" aria-label="ปิด">${I.x}</button>
-      </div>
-      <div style="padding:16px 18px;display:flex;flex-direction:column;gap:14px">
-        <div style="display:flex;gap:8px">
-          <button id="scan-btn-out" onclick="setScanMode('OUT')"
-            style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid #dc2626;background:#dc2626;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all .15s">
-            📤 สแกนออก<br><span style="font-size:11px;font-weight:400;opacity:.85">(ใช้หมึก)</span>
-          </button>
-          <button id="scan-btn-in" onclick="setScanMode('IN')"
-            style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all .15s">
-            📥 สแกนเข้า<br><span style="font-size:11px;font-weight:400;opacity:.85">(เติมสต็อก)</span>
-          </button>
-        </div>
-        <div id="reader" style="width:100%;border-radius:12px;overflow:hidden;background:#000;min-height:240px;display:flex;align-items:center;justify-content:center">
-          <div style="color:#666;font-size:13px;font-family:'Sarabun',sans-serif">กำลังเปิดกล้อง…</div>
-        </div>
-        <div id="scan-debug" style="text-align:center;font-size:12px;color:var(--text-faint);padding:7px 12px;background:var(--surface3);border-radius:8px;border:1px solid var(--border);font-family:'JetBrains Mono',monospace;word-break:break-all">รอสแกน…</div>
-        <div style="display:flex;gap:6px">
-          <input id="scan-manual" type="text" placeholder="ป้อนรหัสบาร์โค้ดด้วยตนเอง…" style="flex:1;font-size:13px"
-            onkeydown="if(event.key==='Enter'){onScanSuccess(this.value);this.value='';}" autocomplete="off" autocorrect="off" autocapitalize="off"/>
-          <button onclick="onScanSuccess(document.getElementById('scan-manual').value);document.getElementById('scan-manual').value='';"
-            style="padding:9px 14px;border-radius:10px;background:#4f46e5;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;white-space:nowrap">ค้นหา</button>
-        </div>
-        <div style="text-align:center;font-size:11px;color:var(--text-faint);line-height:1.6;padding:6px 12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border2)">
-          📦 จ่อบาร์โค้ดแนวนอนให้อยู่ในกรอบสีขาว · หรือป้อนรหัสด้วยตนเองด้านบน
-        </div>
-      </div>
-    </div>
-  </div>`);
-  setTimeout(function(){startScanner();setScanMode('OUT');},300);
-}
-async function closeScanner(){
-  if(html5QrcodeInstance){
-    try{
-      if(html5QrcodeInstance.isScanning)await html5QrcodeInstance.stop();
-      html5QrcodeInstance.clear();
-    }catch(e){}
-    html5QrcodeInstance=null;
-  }
-  isProcessingScan=false;
-  closeModal();
-}
+  });
+}());
 
 function openSettings(id){if(!isAdmin()){showToast('ต้องใช้สิทธิ์ Admin เพื่อตั้งค่า','error');return;}S.settingsItem=id;renderModal();}
 function closeSettings(){closeModal();}
@@ -1487,7 +1422,7 @@ function renderDashboard(){
         <span style="font-size:12px;color:var(--text-faint);margin-left:8px">แสดง ${items.length} จาก ${S.inventory.length} รายการ</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        ${canEditInventory()?`<button onclick="openScanner()" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:#4f46e5;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;box-shadow:0 2px 8px rgba(79,70,229,.25);white-space:nowrap" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">📷 สแกนเบิก/รับของ</button>`:''}
+        ${canEditInventory()?`<button id="scan-mode-toggle" onclick="togglePhysicalScanMode()" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:#fee2e2;border:1px solid #fca5a5;color:#dc2626;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;white-space:nowrap">📤 โหมด: เบิกออก</button>`:''}
         <div style="position:relative">
           <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-faint)">${I.search}</span>
           <input id="search-input" type="text" placeholder="ค้นหาหมึก, รุ่นเครื่อง…" value="${esc(S.search)}" oninput="setSearch(this.value)" style="padding-left:34px;width:180px"/>
