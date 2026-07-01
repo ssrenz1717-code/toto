@@ -1728,11 +1728,7 @@ function renderDashboard(){
 function renderInventory(){
   const canEdit=canEditInventory();
   const canAdmin=isAdmin();
-  // Header with Add button
-  document.getElementById('header-title').innerHTML=`<div style="display:flex;align-items:center;gap:14px">
-    <div><div style="font-size:15px;font-weight:700;color:var(--text-primary)">คลังหมึก</div><div style="font-size:11px;color:var(--text-faint);margin-top:1px">จัดการรายการสต็อกทั้งหมด</div></div>
-    ${canAdmin?`<button onclick="openAddItem()" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:#4f46e5;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;box-shadow:0 2px 8px rgba(79,70,229,.2)" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">+ เพิ่มหมึก</button>`:''}
-  </div>`;
+  document.getElementById('header-title').innerHTML='<div><div style="font-size:15px;font-weight:700;color:var(--text-primary)">คลังหมึก</div><div style="font-size:11px;color:var(--text-faint);margin-top:1px">จัดการรายการสต็อกทั้งหมด</div></div>';
   // Filter items
   const models=[...new Set(S.inventory.map(i=>i.model||''))].filter(Boolean).sort();
   let items=[...S.inventory];
@@ -1788,7 +1784,10 @@ function renderInventory(){
         <input id="search-input" type="text" placeholder="ค้นหา…" value="${esc(S.search)}" oninput="setSearch(this.value)" style="padding-left:34px;width:160px"/>
       </div>
       ${scanToggle}
-      <span style="font-size:12px;color:var(--text-faint);margin-left:auto">แสดง ${items.length} จาก ${S.inventory.length} รายการ</span>
+      <div style="display:flex;align-items:center;gap:12px;margin-left:auto">
+        <span style="font-size:12px;color:var(--text-faint)">แสดง ${items.length} จาก ${S.inventory.length} รายการ</span>
+        ${canAdmin?`<button onclick="openAddItem()" style="display:flex;align-items:center;gap:7px;padding:10px 20px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;box-shadow:0 4px 12px rgba(79,70,229,.35);white-space:nowrap;letter-spacing:.02em" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg> เพิ่มหมึกใหม่</button>`:''}
+      </div>
     </div>
     <div class="card fade-up" style="overflow:hidden">
       <div style="overflow-x:auto">
