@@ -589,44 +589,59 @@ function showDailyCheckModal(){
   const inv=S.inventory;
   const groups={};
   inv.forEach(i=>{if(!groups[i.mk])groups[i.mk]={model:i.model,mk:i.mk,items:[]};groups[i.mk].items.push(i);});
-  let rows='';
-  Object.values(groups).forEach(g=>{
-    rows+=`<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">${g.model}</div>`;
-    g.items.forEach(i=>{
+  const mcMap={'330AC':'#0891b2','2521AC':'#7c3aed'};
+  let groupsHtml='';
+  Object.values(groups).forEach(function(g){
+    const mc=mcMap[g.mk]||'#4f46e5';
+    const mcLight=mc+'20';const mcBorder=mc+'35';
+    let itemsHtml='';
+    g.items.forEach(function(i){
       const tc=TC[i.color]||TC.BLACK;
-      rows+=`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--surface3)">
-        <span style="width:10px;height:10px;border-radius:50%;background:${tc.hex};display:inline-block;flex-shrink:0"></span>
-        <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text-primary)">${i.name}</div><div style="font-size:11px;color:var(--text-faint)">${i.part}</div></div>
-        <div style="font-size:11px;color:var(--text-muted);text-align:right;margin-right:4px;white-space:nowrap">ระบบ: <b>${i.qty}</b></div>
-        <input type="number" id="dc-${i.id}" min="0" placeholder="นับจริง"
-          style="width:76px;padding:7px 8px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-primary);font-size:14px;font-weight:700;text-align:center;font-family:'Sarabun',sans-serif;outline:none"
-          onfocus="this.style.borderColor='#4f46e5'" onblur="this.style.borderColor='var(--border)'">
-      </div>`;
+      itemsHtml+=
+        '<div style="display:flex;align-items:center;gap:0;padding:10px 14px;background:var(--surface);border-radius:12px;border:2px solid var(--border2);margin-bottom:8px" '
+        +'onfocusin="this.style.borderColor=\''+mc+'\'" onfocusout="this.style.borderColor=\'var(--border2)\'"><div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">'
+        +'<span style="width:14px;height:14px;border-radius:50%;background:'+tc.hex+';display:inline-block;flex-shrink:0"></span>'
+        +'<div style="min-width:0"><div style="font-size:14px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(i.name)+'</div>'
+        +'<div style="font-size:11px;color:var(--text-faint);font-family:\'JetBrains Mono\',monospace">'+(i.part?esc(i.part):'—')+'</div></div></div>'
+        +'<div style="text-align:center;flex-shrink:0;padding:0 14px;border-left:1px solid var(--border2)">'
+        +'<div style="font-size:10px;color:var(--text-faint);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">ในระบบ</div>'
+        +'<div style="font-size:22px;font-weight:800;color:var(--text-placeholder);font-family:\'JetBrains Mono\',monospace;line-height:1">'+i.qty+'</div>'
+        +'<div style="font-size:10px;color:var(--text-placeholder);margin-top:1px">กล่อง</div></div>'
+        +'<div style="flex-shrink:0;border-left:1px solid var(--border2);padding-left:14px">'
+        +'<div style="font-size:10px;color:'+mc+';font-weight:700;text-transform:uppercase;letter-spacing:.04em;text-align:center;margin-bottom:5px">นับจริง ✏️</div>'
+        +'<input type="number" id="dc-'+i.id+'" min="0" placeholder="?"'
+        +' style="width:76px;height:56px;border-radius:10px;border:2px solid var(--border);background:var(--surface2);color:var(--text-primary);font-size:24px;font-weight:800;text-align:center;font-family:\'JetBrains Mono\',monospace;outline:none;padding:0;display:block"'
+        +' onfocus="this.style.borderColor=\''+mc+'\';this.style.background=\'var(--surface)\'"'
+        +' onblur="this.style.borderColor=\'var(--border)\';this.style.background=\'var(--surface2)\'"></div></div>';
     });
-    rows+='</div>';
+    groupsHtml+=
+      '<div style="margin-bottom:20px">'
+      +'<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;background:'+mcLight+';border:1px solid '+mcBorder+';margin-bottom:10px">'
+      +'<div style="width:10px;height:10px;border-radius:50%;background:'+mc+';flex-shrink:0"></div>'
+      +'<span style="font-size:12px;font-weight:800;color:'+mc+';letter-spacing:.04em">🖨️ '+esc(g.model)+'</span>'
+      +'<span style="font-size:11px;color:var(--text-faint);margin-left:auto">'+g.items.length+' รายการ</span>'
+      +'</div>'+itemsHtml+'</div>';
   });
-  _openModal(`
-  <div class="modal-bg" role="dialog" aria-modal="true" aria-label="นับสต็อกประจำวัน">
-    <div class="card fade-up" id="dc-modal-forced" style="width:100%;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden;display:flex;flex-direction:column;max-height:90vh">
-      <div style="height:4px;background:linear-gradient(90deg,#4f46e5,#7c3aed);flex-shrink:0"></div>
-      <div style="padding:20px 24px 0;flex-shrink:0">
-        <div style="text-align:center;margin-bottom:14px">
-          <div style="font-size:34px;margin-bottom:6px">📋</div>
-          <div style="font-size:17px;font-weight:700;color:var(--text-primary)">นับสต็อกประจำวัน</div>
-          <div style="font-size:12px;color:var(--text-faint);margin-top:3px">${new Date().toLocaleDateString('th-TH',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
-        </div>
-        <div style="padding:9px 14px;background:#fef3c7;border-radius:8px;font-size:11px;color:#92400e;border:1px solid #fde68a;text-align:center;margin-bottom:14px">
-          ⚠️ กรุณานับของจริงบนชั้นแล้วกรอกจำนวนทุกรายการ — ห้ามกดส่งโดยไม่กรอก
-        </div>
-      </div>
-      <div style="padding:0 24px;overflow-y:auto;flex:1">${rows}</div>
-      <div style="padding:16px 24px 20px;flex-shrink:0;border-top:1px solid var(--border)">
-        <div style="display:flex;gap:10px">
-          <button onclick="confirmDailyStock()" style="flex:1;padding:11px;border-radius:10px;background:#4f46e5;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">✅ ยืนยันผลการนับสต็อก</button>
-        </div>
-      </div>
-    </div>
-  </div>`);
+  const dateStr=new Date().toLocaleDateString('th-TH',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  _openModal(
+    '<div class="modal-bg" role="dialog" aria-modal="true" aria-label="นับสต็อกประจำวัน">'
+    +'<div class="card fade-up" id="dc-modal-forced" style="width:100%;max-width:540px;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden;display:flex;flex-direction:column;max-height:92vh">'
+    +'<div style="height:5px;background:linear-gradient(90deg,#4f46e5,#7c3aed,#ec4899);flex-shrink:0"></div>'
+    +'<div style="padding:20px 24px 16px;flex-shrink:0;border-bottom:1px solid var(--border2)">'
+    +'<div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px">'
+    +'<div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#ede9fe,#ddd6fe);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📋</div>'
+    +'<div><div style="font-size:18px;font-weight:800;color:var(--text-primary)">นับสต็อกประจำวัน</div>'
+    +'<div style="font-size:12px;color:var(--text-faint);margin-top:3px">'+dateStr+'</div></div></div>'
+    +'<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#fef3c7;border-radius:10px;border:1px solid #fde68a">'
+    +'<span style="font-size:15px;flex-shrink:0">⚠️</span>'
+    +'<span style="font-size:12px;color:#92400e;font-weight:600;line-height:1.5">นับของจริงบนชั้นวาง แล้วกรอกจำนวนทุกช่อง — ห้ามกดส่งโดยไม่กรอก</span>'
+    +'</div></div>'
+    +'<div style="flex:1;overflow-y:auto;padding:16px 24px">'+groupsHtml+'</div>'
+    +'<div style="flex-shrink:0;padding:16px 24px 20px;border-top:1px solid var(--border2);background:var(--surface2)">'
+    +'<button onclick="confirmDailyStock()" style="width:100%;padding:14px;border-radius:12px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border:none;color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:\'Sarabun\',sans-serif;box-shadow:0 4px 14px rgba(79,70,229,.35)" onmouseover="this.style.opacity=\'.9\'" onmouseout="this.style.opacity=\'1\'">✅ ยืนยันผลการนับสต็อก</button>'
+    +'<div style="text-align:center;font-size:11px;color:var(--text-faint);margin-top:8px">ระบบจะส่งรายงานสรุปไปยัง Discord โดยอัตโนมัติ 📢</div>'
+    +'</div></div></div>'
+  );
 }
 async function confirmDailyStock(){
   const inv=S.inventory;
