@@ -360,14 +360,31 @@ async function seedIfEmpty(){
 }
 function initRealtime(){
   sb.channel('toner-realtime')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'inventory'},function(payload){
+      const inserted=mapInvFromDB(payload.new);
+      if(!S.inventory.find(function(i){return i.id===inserted.id;})){
+        S.inventory.push(inserted);
+        renderContent();
+      }
+    })
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'inventory'},function(payload){
       const updated=mapInvFromDB(payload.new);
       const idx=S.inventory.findIndex(function(i){return i.id===updated.id;});
       if(idx!==-1){S.inventory[idx]=updated;renderContent();}
     })
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'inventory'},function(payload){
+      const deletedId=payload.old&&payload.old.id;
+      if(deletedId){
+        S.inventory=S.inventory.filter(function(i){return i.id!==deletedId;});
+        renderContent();
+      }
+    })
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'history'},function(payload){
       const entry=mapHistFromDB(payload.new);
-      if(!S.history.find(function(h){return h.id===entry.id;})){S.history.unshift(entry);}
+      if(!S.history.find(function(h){return h.id===entry.id;})){
+        S.history.unshift(entry);
+        renderContent();
+      }
     })
     .subscribe();
 }
@@ -791,8 +808,7 @@ function applyQtyChange(id,newQty,reason,ct){
     sb.from('notifications').insert(mapNotifToDB(newNotif));
     if(nst!=='NORMAL')sendDiscordAlert(newNotif.title,newNotif.msg,nst);
   }
-  const card=document.querySelector(`[data-card="${id}"]`);
-  if(card){const ctx=card.dataset?.context||'inventory';card.outerHTML=renderCard(item,S.inventory.indexOf(item),ctx);}
+  renderContent();
   const nb=document.getElementById('notif-badge');
   if(nb){nb.textContent=unread()||'';nb.style.display=unread()?'flex':'none';}
 }
