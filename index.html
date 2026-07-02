@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="call-tracking-widget/widget.css"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 *::-webkit-scrollbar{width:5px;height:5px}
@@ -1721,7 +1722,25 @@ function renderDashboard(){
         ${actHtml}
       </div>
     </div>
+    <div style="margin-top:16px;max-width:320px">
+      <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:10px">ติดต่อศูนย์บริการ</div>
+      <div id="toshiba-call-widget"></div>
+    </div>
   </div>`;
+  initToshibaCallWidget();
+}
+function initToshibaCallWidget(){
+  const el=document.getElementById('toshiba-call-widget');
+  if(!el)return;
+  import('./call-tracking-widget/widget.js').then(function(mod){
+    mod.initCallTrackingWidget(el,{
+      apiBaseUrl:'http://localhost:3001/api',
+      actionType:'CALL_TOSHIBA',
+      phoneNumber:'096-786-1717',
+      displayName:'Toshiba Service Center',
+      getUserName:function(){return S.user?.fullName||'Unknown';},
+    });
+  }).catch(function(e){console.error('[ToshibaWidget] load failed:',e);});
 }
 
 // ─── INVENTORY ────────────────────────────────────────────────
