@@ -185,9 +185,16 @@ const SUPABASE_KEY='sb_publishable_SsiOk-BBxN_zljuwT6uveA_-OBcfJa2';
 let sb;
 const DISCORD_WEBHOOK_URL='https://discord.com/api/webhooks/1521690290816286760/d-cye2wruvQ-Sizz8xNbm96RZ29Zyz-wMwx0-ro1N3dCX5S1y6Pxzi2p4mwcFGi8PLZi';
 // Service center contact for the "Call Now" duplicate-call-prevention widget. Reads/writes go
-// straight to Supabase's call_logs table (see supabase/call-tracking-schema.sql) — no separate
-// backend needed.
+// straight to Supabase's call_logs / call_status_updates tables (see
+// supabase/call-tracking-schema.sql) — no separate backend needed.
 const CALL_CENTER={phone:'096-786-1717',name:'Toshiba Service Center'};
+const CALL_STATUS_ORDER=['CALLED','PREPARING','SHIPPING','DELIVERED'];
+const CALL_STATUS_LABELS={
+  CALLED:{label:'โทรแล้ว',c:'#0891b2',bg:'#cffafe',br:'#67e8f9'},
+  PREPARING:{label:'กำลังเตรียมของ',c:'#d97706',bg:'#fef3c7',br:'#fcd34d'},
+  SHIPPING:{label:'กำลังจัดส่ง',c:'#7c3aed',bg:'#ede9fe',br:'#c4b5fd'},
+  DELIVERED:{label:'ได้รับแล้ว',c:'#16a34a',bg:'#dcfce7',br:'#86efac'},
+};
 
 // ─── ICONS ───────────────────────────────────────────────────
 const I={
@@ -280,7 +287,7 @@ function mapAuditFromDB(r){return{id:r.id,username:r.username,fullName:r.full_na
 function mapAuditToDB(a){return{id:a.id,username:a.username,full_name:a.fullName,role:a.role,timestamp:a.timestamp};}
 
 // ─── STATE ────────────────────────────────────────────────────
-let S={page:'login',mode:'login',user:null,sidebarOpen:true,notifOpen:false,filter:'ALL',search:'',modelFilter:'ALL',invStatus:'ALL',settingsItem:null,showPass:false,showPass2:false,loginErr:'',regErr:'',regOk:'',regDraft:{u:'',fn:'',em:'',p:'',p2:''},inventory:[],history:[],notifications:[],histPage:1,users:[],auditLogs:[],usersTab:'accounts',theme:'auto',scale:'auto'};
+let S={page:'login',mode:'login',user:null,sidebarOpen:true,notifOpen:false,filter:'ALL',search:'',modelFilter:'ALL',invStatus:'ALL',settingsItem:null,showPass:false,showPass2:false,loginErr:'',regErr:'',regOk:'',regDraft:{u:'',fn:'',em:'',p:'',p2:''},inventory:[],history:[],notifications:[],histPage:1,users:[],auditLogs:[],usersTab:'accounts',theme:'auto',scale:'auto',ordersShowAll:false};
 let searchTimer=null;
 let searchComposing=false;
 let _prevFocus=null;
@@ -455,6 +462,7 @@ const CTC={INCREASE:{label:'เพิ่ม',c:'var(--ctc-inc-c)',bg:'var(--ctc-
 
 function ago(d){const s=Math.floor((Date.now()-new Date(d))/1000);if(s<60)return'เมื่อกี้';if(s<3600)return Math.floor(s/60)+' นาทีที่แล้ว';if(s<86400)return Math.floor(s/3600)+' ชม.ที่แล้ว';return Math.floor(s/86400)+' วันที่แล้ว';}
 function fmtDt(d){const dt=new Date(d);return dt.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'2-digit'})+' '+dt.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});}
+function fmtDate(d){return new Date(d).toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'2-digit'});}
 function uid(){return'x'+Math.random().toString(36).slice(2,9);}
 function applyTheme(){
   const isDark=S.theme==='dark'||(S.theme==='auto'&&window.matchMedia('(prefers-color-scheme:dark)').matches);
@@ -925,78 +933,127 @@ function closeModal(){
   _prevFocus=null;
 }
 
-// ─── CALL TRACKING (prevent duplicate supplier calls) ──────────
-// Backed directly by Supabase's call_logs table — see supabase/call-tracking-schema.sql
-// for the DDL/RLS. One row per (inventory item, calendar day); a unique index on the
-// DB side stops two people who click "Call Now" within milliseconds of each other from
-// both registering a call.
-async function checkCallLock(itemId){
-  const dayStart=new Date();dayStart.setHours(0,0,0,0);
-  const{data,error}=await sb.from('call_logs')
-    .select('user_id,called_at,users(full_name)')
+// ─── CALL TRACKING + ORDER STATUS ───────────────────────────────
+// Backed directly by Supabase's call_logs / call_status_updates tables — see
+// supabase/call-tracking-schema.sql for the DDL/RLS. At most one OPEN order
+// (is_open=true) per item at a time, enforced by a partial unique index on
+// the DB side — that's what stops two staff clicking "Call Now" within
+// milliseconds of each other from both opening an order, and also stops a
+// second order being opened while one is still in transit days later.
+async function getOpenCallOrder(itemId){
+  const{data,error}=await sb.from('call_orders_overview')
+    .select('*')
     .eq('inventory_id',itemId)
-    .gte('called_at',dayStart.toISOString())
+    .eq('is_open',true)
     .order('called_at',{ascending:false})
     .limit(1);
-  if(error){console.error('[CallTracking] status check failed:',error);return null;}
-  if(!data||!data.length)return null;
-  return{calledBy:data[0].users?.full_name||'ไม่ทราบชื่อ',calledAt:data[0].called_at};
+  if(error){console.error('[CallTracking] order lookup failed:',error);return null;}
+  return data&&data.length?data[0]:null;
 }
 function openCallModal(itemId){
   const item=S.inventory.find(i=>i.id===itemId);if(!item)return;
   const eName=esc(item.name);const eMk=esc(item.mk);
   _openModal(`
   <div class="modal-bg" onclick="if(event.target===this)closeModal()" role="dialog" aria-modal="true" aria-label="ติดต่อศูนย์บริการ">
-    <div class="card fade-up" style="width:100%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden">
+    <div class="card fade-up" style="width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden">
       <div style="height:4px;background:#16a34a"></div>
       <div style="padding:20px 22px">
         <div style="font-size:12px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">${CALL_CENTER.name}</div>
-        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:2px">สั่งซื้อเพิ่ม: <b>${eName}</b> (${eMk})</div>
-        <div class="mono" style="font-size:24px;font-weight:800;color:var(--text-primary);margin:10px 0 16px">${CALL_CENTER.phone}</div>
-        <div id="call-modal-status" style="margin-bottom:12px"></div>
-        <a id="call-modal-btn" href="tel:${CALL_CENTER.phone}" onclick="logCall('${itemId}')" style="width:100%;padding:12px;border-radius:10px;background:#16a34a;color:#fff;font-size:15px;font-weight:700;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">${I.phone} โทรเลย</a>
+        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px">สั่งซื้อเพิ่ม: <b>${eName}</b> (${eMk})</div>
+        <div id="call-modal-body" style="text-align:center;padding:16px 0;color:var(--text-faint);font-size:13px">กำลังตรวจสอบสถานะ…</div>
         <button onclick="closeModal()" style="width:100%;padding:10px;margin-top:8px;border-radius:10px;background:none;border:none;color:var(--text-faint);font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">ปิด</button>
       </div>
     </div>
   </div>`);
-  refreshCallModalStatus(itemId);
+  refreshCallModal(itemId);
 }
-async function refreshCallModalStatus(itemId){
-  const lock=await checkCallLock(itemId);
-  if(!lock)return;
-  applyCallLockedUI(lock.calledBy,lock.calledAt);
+async function refreshCallModal(itemId){
+  const order=await getOpenCallOrder(itemId);
+  const body=document.getElementById('call-modal-body');
+  if(!body)return; // modal was closed before this resolved
+  body.innerHTML=order?renderCallOrderView(order):renderCallButtonView(itemId);
+  if(order)loadCallTimeline(order.call_log_id);
 }
-function applyCallLockedUI(calledBy,calledAt){
-  const btn=document.getElementById('call-modal-btn');
-  const statusEl=document.getElementById('call-modal-status');
-  if(!btn||!statusEl)return; // modal was closed before this resolved
-  btn.setAttribute('aria-disabled','true');
-  btn.removeAttribute('href');
-  btn.style.pointerEvents='none';
-  btn.style.opacity='.55';
-  statusEl.innerHTML='<div style="font-size:12.5px;line-height:1.5;padding:10px 12px;border-radius:8px;background:#fef3c7;color:#92400e;border:1px solid #fde68a">สถานะ: มีการโทรไปแล้วโดย <b>'+esc(calledBy)+'</b> เมื่อ '+fmtDt(calledAt)+'</div>';
+function renderCallButtonView(itemId){
+  return`<a href="tel:${CALL_CENTER.phone}" onclick="logCall('${itemId}')" style="width:100%;padding:12px;border-radius:10px;background:#16a34a;color:#fff;font-size:15px;font-weight:700;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">${I.phone} ${CALL_CENTER.phone} · โทรเลย</a>`;
+}
+function renderCallOrderView(order){
+  const sc=CALL_STATUS_LABELS[order.current_status];
+  const idx=CALL_STATUS_ORDER.indexOf(order.current_status);
+  const nextStatus=idx>=0&&idx<CALL_STATUS_ORDER.length-1?CALL_STATUS_ORDER[idx+1]:null;
+  const eCalledBy=esc(order.called_by||'ไม่ทราบชื่อ');
+  const advanceHtml=(nextStatus&&canEditInventory())?`
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border2);text-align:left">
+      <label style="display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">อัปเดตสถานะเป็น: <b style="color:${CALL_STATUS_LABELS[nextStatus].c}">${CALL_STATUS_LABELS[nextStatus].label}</b></label>
+      ${nextStatus==='SHIPPING'?`<input id="call-order-date" type="date" style="margin-bottom:8px"/>`:''}
+      <input id="call-order-note" type="text" placeholder="หมายเหตุ (ไม่บังคับ)" style="margin-bottom:8px"/>
+      <button onclick="advanceCallStatus('${order.call_log_id}','${order.inventory_id}','${nextStatus}')" style="width:100%;padding:10px;border-radius:10px;background:${CALL_STATUS_LABELS[nextStatus].c};border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">บันทึกสถานะ</button>
+    </div>`:'';
+  return`
+    <div style="text-align:left">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:12px;color:var(--text-faint)">โทรโดย <b style="color:var(--text-secondary)">${eCalledBy}</b> · ${fmtDt(order.called_at)}</span>
+        <span style="font-size:11px;padding:3px 10px;border-radius:99px;background:${sc.bg};color:${sc.c};border:1px solid ${sc.br};font-weight:700">${sc.label}</span>
+      </div>
+      <div id="call-order-timeline" style="font-size:12px;color:var(--text-faint)">กำลังโหลดไทม์ไลน์…</div>
+      ${advanceHtml}
+    </div>`;
+}
+async function loadCallTimeline(callLogId){
+  const{data,error}=await sb.from('call_status_updates')
+    .select('status,note,expected_date,created_at,users(full_name)')
+    .eq('call_log_id',callLogId)
+    .order('created_at');
+  const el=document.getElementById('call-order-timeline');
+  if(!el)return; // modal moved on before this resolved
+  if(error){el.textContent='โหลดไทม์ไลน์ไม่สำเร็จ';return;}
+  el.innerHTML=(data||[]).map(function(row){
+    const sc=CALL_STATUS_LABELS[row.status]||{label:row.status,c:'#64748b'};
+    const who=esc(row.users?.full_name||'ไม่ทราบชื่อ');
+    const dateLine=row.expected_date?'<div style="font-size:11px;color:var(--text-faint)">คาดว่าจะถึง: '+fmtDate(row.expected_date)+'</div>':'';
+    const noteLine=row.note?'<div style="font-size:11px;color:var(--text-faint);margin-top:2px">"'+esc(row.note)+'"</div>':'';
+    return'<div style="display:flex;gap:8px;padding:6px 0">'
+      +'<span style="width:8px;height:8px;border-radius:50%;background:'+sc.c+';margin-top:5px;flex-shrink:0"></span>'
+      +'<div><div style="font-size:12.5px;font-weight:700;color:var(--text-primary)">'+sc.label+'</div>'
+      +'<div style="font-size:11px;color:var(--text-faint)">'+who+' · '+fmtDt(row.created_at)+'</div>'
+      +dateLine+noteLine+'</div></div>';
+  }).join('');
 }
 async function logCall(itemId){
   // Fires the instant "Call Now" is clicked; does NOT block the tel: navigation —
   // the click should always try to dial, this just records it for everyone else.
-  if(!S.user){return;}
+  if(!S.user)return;
   const{data,error}=await sb.from('call_logs').insert({
     inventory_id:itemId,
     user_id:S.user.id,
     phone_number:CALL_CENTER.phone,
-  }).select('called_at').single();
+  }).select('id').single();
   if(error){
-    if(error.code==='23505'){ // unique_violation — someone else's call already landed first
-      const lock=await checkCallLock(itemId);
-      if(lock)applyCallLockedUI(lock.calledBy,lock.calledAt);
+    if(error.code==='23505'){ // unique_violation — an open order already exists for this item
+      refreshCallModal(itemId);
       return;
     }
     console.error('[CallTracking] log call failed:',error);
-    const statusEl=document.getElementById('call-modal-status');
-    if(statusEl)statusEl.innerHTML='<div style="font-size:12.5px;padding:10px 12px;border-radius:8px;background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5">บันทึกการโทรไม่สำเร็จ กรุณาลองใหม่</div>';
+    const body=document.getElementById('call-modal-body');
+    if(body)body.innerHTML='<div style="font-size:12.5px;padding:10px 12px;border-radius:8px;background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5">บันทึกการโทรไม่สำเร็จ กรุณาลองใหม่</div>';
     return;
   }
-  applyCallLockedUI(S.user.fullName||'คุณ',data.called_at);
+  await sb.from('call_status_updates').insert({call_log_id:data.id,status:'CALLED',updated_by:S.user.id});
+  refreshCallModal(itemId);
+}
+async function advanceCallStatus(callLogId,itemId,status){
+  const dateEl=document.getElementById('call-order-date');
+  const noteEl=document.getElementById('call-order-note');
+  const{error}=await sb.from('call_status_updates').insert({
+    call_log_id:callLogId,
+    status,
+    note:(noteEl&&noteEl.value.trim())||null,
+    expected_date:(dateEl&&dateEl.value)||null,
+    updated_by:S.user?.id,
+  });
+  if(error){console.error('[CallTracking] status update failed:',error);showToast('อัปเดตสถานะไม่สำเร็จ','error');return;}
+  refreshCallModal(itemId);
+  if(S.page==='orders')renderOrders();
 }
 
 // ─── SCANNER (Physical Barcode Scanner / Keyboard Wedge) ────────
@@ -1455,7 +1512,7 @@ function renderShell(){
         <div data-sidebar-fade style="overflow:hidden;white-space:nowrap;opacity:${S.sidebarOpen?1:0};transition:opacity .2s"><div style="font-size:14px;font-weight:700;color:var(--text-primary)">TonerTrack</div><div style="font-size:10px;color:var(--text-faint);margin-top:1px">สต็อกหมึกพิมพ์</div></div>
       </div>
       <nav style="flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:2px">
-        ${[['dashboard','home','แดชบอร์ด'],['inventory','cube','คลังหมึก'],['history','clock','ประวัติ'],['settings','cog','ตั้งค่า'],...(isAdmin()?[['users','users','จัดการผู้ใช้']]:[])]
+        ${[['dashboard','home','แดชบอร์ด'],['inventory','cube','คลังหมึก'],['orders','truck','การสั่งซื้อ'],['history','clock','ประวัติ'],['settings','cog','ตั้งค่า'],...(isAdmin()?[['users','users','จัดการผู้ใช้']]:[])]
         .map(([pg,ic,lb])=>`
         <div class="sidebar-item${S.page===pg?' active':''}" onclick="nav('${pg}')" title="${lb}" style="white-space:nowrap">
           <span style="flex-shrink:0">${I[ic]}</span><span data-sidebar-fade style="overflow:hidden;opacity:${S.sidebarOpen?1:0};transition:opacity .15s">${lb}</span>
@@ -1915,6 +1972,49 @@ function renderInventory(){
   </div>`;
 }
 
+// ─── ORDERS (post-call procurement tracking) ────────────────────
+async function renderOrders(){
+  document.getElementById('header-title').innerHTML='<div><div style="font-size:15px;font-weight:700;color:var(--text-primary)">การสั่งซื้อ</div><div style="font-size:11px;color:var(--text-faint);margin-top:1px">ติดตามสถานะหลังโทรสั่งซื้อหมึก</div></div>';
+  const content=document.getElementById('content');
+  const showAll=S.ordersShowAll;
+  content.innerHTML=`<div style="padding:18px;max-width:1200px">
+    <div style="display:flex;gap:6px;margin-bottom:16px">
+      <button class="tab${!showAll?' t-all':''}" onclick="S.ordersShowAll=false;renderOrders()">กำลังดำเนินการ</button>
+      <button class="tab${showAll?' t-all':''}" onclick="S.ordersShowAll=true;renderOrders()">ทั้งหมด</button>
+    </div>
+    <div id="orders-table-wrap" class="card fade-up" style="overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+      <div style="text-align:center;padding:50px;color:var(--text-faint)">กำลังโหลด…</div>
+    </div>
+  </div>`;
+  let q=sb.from('call_orders_overview').select('*').order('called_at',{ascending:false});
+  if(!showAll)q=q.eq('is_open',true);
+  const{data,error}=await q;
+  const wrap=document.getElementById('orders-table-wrap');
+  if(!wrap)return; // navigated away before this resolved
+  if(error){wrap.innerHTML='<div style="padding:30px;color:#dc2626;text-align:center">โหลดข้อมูลไม่สำเร็จ: '+esc(error.message)+'</div>';return;}
+  const orders=data||[];
+  if(!orders.length){
+    wrap.innerHTML='<div style="text-align:center;padding:50px;color:var(--text-faint)">'+(showAll?'ยังไม่มีประวัติการสั่งซื้อ':'ไม่มีคำสั่งซื้อที่กำลังดำเนินการ')+'</div>';
+    return;
+  }
+  wrap.innerHTML='<div style="overflow-x:auto"><table><thead><tr>'
+    +'<th>หมึก</th><th>โทรโดย</th><th>เมื่อ</th><th>สถานะปัจจุบัน</th><th>คาดว่าจะถึง</th><th>อัปเดตล่าสุด</th><th></th>'
+    +'</tr></thead><tbody>'
+    +orders.map(function(o){
+      const sc=CALL_STATUS_LABELS[o.current_status]||{label:o.current_status,c:'#64748b',bg:'#f1f5f9',br:'#cbd5e1'};
+      return'<tr>'
+        +'<td><div style="font-weight:700;color:var(--text-primary)">'+esc(o.item_name)+'</div><div style="font-size:11px;color:var(--text-faint)">'+esc(o.item_mk)+'</div></td>'
+        +'<td style="color:var(--text-secondary)">'+esc(o.called_by||'—')+'</td>'
+        +'<td class="mono" style="font-size:12px;color:var(--text-faint);white-space:nowrap">'+fmtDt(o.called_at)+'</td>'
+        +'<td><span style="font-size:11px;padding:3px 10px;border-radius:99px;background:'+sc.bg+';color:'+sc.c+';border:1px solid '+sc.br+';font-weight:700">'+sc.label+'</span></td>'
+        +'<td class="mono" style="font-size:12px;color:var(--text-faint)">'+(o.expected_date?fmtDate(o.expected_date):'—')+'</td>'
+        +'<td style="font-size:12px;color:var(--text-faint)">'+esc(o.status_updated_by||'—')+' · '+ago(o.status_updated_at)+'</td>'
+        +'<td><button onclick="openCallModal(\''+o.inventory_id+'\')" style="font-size:11px;padding:5px 12px;border-radius:6px;background:var(--surface3);border:1px solid var(--border);color:var(--text-secondary);cursor:pointer;font-family:\'Sarabun\',sans-serif;white-space:nowrap">ดูรายละเอียด</button></td>'
+        +'</tr>';
+    }).join('')
+    +'</tbody></table></div>';
+}
+
 // ─── HISTORY ──────────────────────────────────────────────────
 function renderHistory(){
   document.getElementById('header-title').innerHTML=`<div style="font-size:15px;font-weight:700;color:var(--text-primary)">ประวัติการเปลี่ยนแปลง</div>`;
@@ -2165,6 +2265,7 @@ function renderContent(){
   });
   if(S.page==='dashboard')renderDashboard();
   else if(S.page==='inventory')renderInventory();
+  else if(S.page==='orders')renderOrders();
   else if(S.page==='history')renderHistory();
   else if(S.page==='settings')renderSettings();
   else if(S.page==='users')renderUsers();
