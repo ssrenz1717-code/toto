@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="call-tracking-widget/widget.css"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 *::-webkit-scrollbar{width:5px;height:5px}
@@ -185,6 +184,10 @@ const SUPABASE_URL='https://lmltfzyipuverhffzooy.supabase.co';
 const SUPABASE_KEY='sb_publishable_SsiOk-BBxN_zljuwT6uveA_-OBcfJa2';
 let sb;
 const DISCORD_WEBHOOK_URL='https://discord.com/api/webhooks/1521690290816286760/d-cye2wruvQ-Sizz8xNbm96RZ29Zyz-wMwx0-ro1N3dCX5S1y6Pxzi2p4mwcFGi8PLZi';
+// Service center contact for the "Call Now" duplicate-call-prevention widget. Reads/writes go
+// straight to Supabase's call_logs table (see supabase/call-tracking-schema.sql) — no separate
+// backend needed.
+const CALL_CENTER={phone:'096-786-1717',name:'Toshiba Service Center'};
 
 // ─── ICONS ───────────────────────────────────────────────────
 const I={
@@ -922,6 +925,80 @@ function closeModal(){
   _prevFocus=null;
 }
 
+// ─── CALL TRACKING (prevent duplicate supplier calls) ──────────
+// Backed directly by Supabase's call_logs table — see supabase/call-tracking-schema.sql
+// for the DDL/RLS. One row per (inventory item, calendar day); a unique index on the
+// DB side stops two people who click "Call Now" within milliseconds of each other from
+// both registering a call.
+async function checkCallLock(itemId){
+  const dayStart=new Date();dayStart.setHours(0,0,0,0);
+  const{data,error}=await sb.from('call_logs')
+    .select('user_id,called_at,users(full_name)')
+    .eq('inventory_id',itemId)
+    .gte('called_at',dayStart.toISOString())
+    .order('called_at',{ascending:false})
+    .limit(1);
+  if(error){console.error('[CallTracking] status check failed:',error);return null;}
+  if(!data||!data.length)return null;
+  return{calledBy:data[0].users?.full_name||'ไม่ทราบชื่อ',calledAt:data[0].called_at};
+}
+function openCallModal(itemId){
+  const item=S.inventory.find(i=>i.id===itemId);if(!item)return;
+  const eName=esc(item.name);const eMk=esc(item.mk);
+  _openModal(`
+  <div class="modal-bg" onclick="if(event.target===this)closeModal()" role="dialog" aria-modal="true" aria-label="ติดต่อศูนย์บริการ">
+    <div class="card fade-up" style="width:100%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden">
+      <div style="height:4px;background:#16a34a"></div>
+      <div style="padding:20px 22px">
+        <div style="font-size:12px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">${CALL_CENTER.name}</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:2px">สั่งซื้อเพิ่ม: <b>${eName}</b> (${eMk})</div>
+        <div class="mono" style="font-size:24px;font-weight:800;color:var(--text-primary);margin:10px 0 16px">${CALL_CENTER.phone}</div>
+        <div id="call-modal-status" style="margin-bottom:12px"></div>
+        <a id="call-modal-btn" href="tel:${CALL_CENTER.phone}" onclick="logCall('${itemId}')" style="width:100%;padding:12px;border-radius:10px;background:#16a34a;color:#fff;font-size:15px;font-weight:700;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;font-family:'Sarabun',sans-serif" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">${I.phone} โทรเลย</a>
+        <button onclick="closeModal()" style="width:100%;padding:10px;margin-top:8px;border-radius:10px;background:none;border:none;color:var(--text-faint);font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">ปิด</button>
+      </div>
+    </div>
+  </div>`);
+  refreshCallModalStatus(itemId);
+}
+async function refreshCallModalStatus(itemId){
+  const lock=await checkCallLock(itemId);
+  if(!lock)return;
+  applyCallLockedUI(lock.calledBy,lock.calledAt);
+}
+function applyCallLockedUI(calledBy,calledAt){
+  const btn=document.getElementById('call-modal-btn');
+  const statusEl=document.getElementById('call-modal-status');
+  if(!btn||!statusEl)return; // modal was closed before this resolved
+  btn.setAttribute('aria-disabled','true');
+  btn.removeAttribute('href');
+  btn.style.pointerEvents='none';
+  btn.style.opacity='.55';
+  statusEl.innerHTML='<div style="font-size:12.5px;line-height:1.5;padding:10px 12px;border-radius:8px;background:#fef3c7;color:#92400e;border:1px solid #fde68a">สถานะ: มีการโทรไปแล้วโดย <b>'+esc(calledBy)+'</b> เมื่อ '+fmtDt(calledAt)+'</div>';
+}
+async function logCall(itemId){
+  // Fires the instant "Call Now" is clicked; does NOT block the tel: navigation —
+  // the click should always try to dial, this just records it for everyone else.
+  if(!S.user){return;}
+  const{data,error}=await sb.from('call_logs').insert({
+    inventory_id:itemId,
+    user_id:S.user.id,
+    phone_number:CALL_CENTER.phone,
+  }).select('called_at').single();
+  if(error){
+    if(error.code==='23505'){ // unique_violation — someone else's call already landed first
+      const lock=await checkCallLock(itemId);
+      if(lock)applyCallLockedUI(lock.calledBy,lock.calledAt);
+      return;
+    }
+    console.error('[CallTracking] log call failed:',error);
+    const statusEl=document.getElementById('call-modal-status');
+    if(statusEl)statusEl.innerHTML='<div style="font-size:12.5px;padding:10px 12px;border-radius:8px;background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5">บันทึกการโทรไม่สำเร็จ กรุณาลองใหม่</div>';
+    return;
+  }
+  applyCallLockedUI(S.user.fullName||'คุณ',data.called_at);
+}
+
 // ─── SCANNER (Physical Barcode Scanner / Keyboard Wedge) ────────
 function togglePhysicalScanMode(){
   physicalScanMode=physicalScanMode==='OUT'?'IN':'OUT';
@@ -1656,7 +1733,9 @@ function renderDashboard(){
           '<div style="display:flex;align-items:center;gap:8px">'+
           '<div style="text-align:right"><div class="mono" style="font-size:20px;font-weight:800;color:'+sc.c+';line-height:1">'+item.qty+'</div>'+
           '<div style="font-size:10px;color:var(--text-faint)">กล่อง</div></div>'+
-          badge(status(item))+'</div></div>'
+          badge(status(item))+
+          '<button onclick="openCallModal(\''+item.id+'\')" class="icon-btn" title="ติดต่อศูนย์บริการ" style="color:#16a34a">'+I.phone+'</button>'+
+          '</div></div>'
         );}).join('')}
       </div>
     </div>`;
@@ -1722,38 +1801,45 @@ function renderDashboard(){
         ${actHtml}
       </div>
     </div>
-    <div style="margin-top:16px;max-width:320px">
-      <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:10px">ติดต่อศูนย์บริการ</div>
-      <div id="toshiba-call-widget"></div>
-    </div>
   </div>`;
-  initToshibaCallWidget();
-}
-function initToshibaCallWidget(){
-  const el=document.getElementById('toshiba-call-widget');
-  if(!el)return;
-  import('./call-tracking-widget/widget.js').then(function(mod){
-    mod.initCallTrackingWidget(el,{
-      apiBaseUrl:'http://localhost:3001/api',
-      actionType:'CALL_TOSHIBA',
-      phoneNumber:'096-786-1717',
-      displayName:'Toshiba Service Center',
-      getUserName:function(){return S.user?.fullName||'Unknown';},
-    });
-  }).catch(function(e){console.error('[ToshibaWidget] load failed:',e);});
 }
 
 // ─── INVENTORY ────────────────────────────────────────────────
+// Shared by the inventory table and CSV export so the two can never drift apart.
+function getFilteredInventory(){
+  let items=[...S.inventory];
+  if(S.modelFilter&&S.modelFilter!=='ALL')items=items.filter(i=>i.model===S.modelFilter);
+  if(S.invStatus&&S.invStatus!=='ALL')items=items.filter(i=>status(i)===S.invStatus);
+  if(S.search.trim()){const q=S.search.toLowerCase();items=items.filter(i=>i.name.toLowerCase().includes(q)||i.model.toLowerCase().includes(q)||(i.part||'').toLowerCase().includes(q)||(i.loc||'').toLowerCase().includes(q));}
+  return items;
+}
+function exportInventoryCSV(){
+  const items=getFilteredInventory();
+  if(!items.length){showToast('ไม่มีรายการให้ export','error');return;}
+  const headers=['ชื่อหมึก','เครื่องพิมพ์','รุ่นสั้น','Part Number','สี','จำนวน','ขั้นต่ำ','วิกฤต','สูงสุด','สถานะ','ตำแหน่งจัดเก็บ','ซัพพลายเออร์','อัปเดตล่าสุด'];
+  const csvEscape=function(v){const s=String(v??'');return/[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+  const rows=items.map(function(i){return[
+    i.name,i.model,i.mk,i.part||'',(TC[i.color]&&TC[i.color].name)||i.color,
+    i.qty,i.min,i.critical,i.max,SC[status(i)].label,i.loc||'',i.sup||'',
+    i.updatedAt?fmtDt(i.updatedAt):'',
+  ].map(csvEscape).join(',');});
+  // Leading BOM so Excel opens the Thai text as UTF-8 instead of mangling it.
+  const csv='﻿'+[headers.join(','),...rows].join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='tonertrack-inventory-'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Export CSV สำเร็จ ('+items.length+' รายการ)','ok');
+}
 function renderInventory(){
   const canEdit=canEditInventory();
   const canAdmin=isAdmin();
   document.getElementById('header-title').innerHTML='<div><div style="font-size:15px;font-weight:700;color:var(--text-primary)">คลังหมึก</div><div style="font-size:11px;color:var(--text-faint);margin-top:1px">จัดการรายการสต็อกทั้งหมด</div></div>';
   // Filter items
   const models=[...new Set(S.inventory.map(i=>i.model||''))].filter(Boolean).sort();
-  let items=[...S.inventory];
-  if(S.modelFilter&&S.modelFilter!=='ALL')items=items.filter(i=>i.model===S.modelFilter);
-  if(S.invStatus&&S.invStatus!=='ALL')items=items.filter(i=>status(i)===S.invStatus);
-  if(S.search.trim()){const q=S.search.toLowerCase();items=items.filter(i=>i.name.toLowerCase().includes(q)||i.model.toLowerCase().includes(q)||(i.part||'').toLowerCase().includes(q)||(i.loc||'').toLowerCase().includes(q));}
+  const items=getFilteredInventory();
   // Build table rows
   const colCount=4+(canEdit?1:0)+(canAdmin?1:0);
   const rows=!items.length
@@ -1769,7 +1855,9 @@ function renderInventory(){
         '<td>'+badge(st)+'</td>'+
         '<td><div class="mono" style="font-size:20px;font-weight:800;color:'+sc.c+';line-height:1">'+item.qty+'</div>'+
         '<div style="margin-top:4px;max-width:80px"><div class="progress-track"><div class="progress-fill" style="width:'+p+'%;background:'+pcol+'"></div></div></div>'+
-        '<div style="font-size:10px;color:var(--text-faint);margin-top:2px">min '+item.min+' · max '+item.max+'</div></td>'+
+        '<div style="font-size:10px;color:var(--text-faint);margin-top:2px">min '+item.min+' · max '+item.max+'</div>'+
+        (item.updatedAt?'<div style="font-size:10px;color:var(--text-faint);margin-top:2px" title="'+fmtDt(item.updatedAt)+'">อัปเดต '+ago(item.updatedAt)+'</div>':'')+
+        '</td>'+
         (canEdit?'<td><div style="display:flex;align-items:center;gap:6px">'+
         '<button class="btn-use" onclick="changeQty(\''+item.id+'\',-1)" '+(item.qty===0?'disabled':'')+' style="padding:6px 10px;font-size:12px;display:flex;align-items:center">'+I.minus+'</button>'+
         '<span class="mono" style="font-size:15px;font-weight:800;color:var(--text-primary);min-width:26px;text-align:center">'+item.qty+'</span>'+
@@ -1805,6 +1893,7 @@ function renderInventory(){
       ${scanToggle}
       <div style="display:flex;align-items:center;gap:12px;margin-left:auto">
         <span style="font-size:12px;color:var(--text-faint)">แสดง ${items.length} จาก ${S.inventory.length} รายการ</span>
+        <button onclick="exportInventoryCSV()" style="display:flex;align-items:center;gap:6px;padding:9px 16px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-secondary);font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;white-space:nowrap" onmouseover="this.style.background='var(--surface3)'" onmouseout="this.style.background='var(--surface)'" title="Export รายการที่กรองอยู่เป็น CSV"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg> Export CSV</button>
         ${canAdmin?`<button onclick="openAddItem()" style="display:flex;align-items:center;gap:7px;padding:10px 20px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;box-shadow:0 4px 12px rgba(79,70,229,.35);white-space:nowrap;letter-spacing:.02em" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg> เพิ่มหมึกใหม่</button>`:''}
       </div>
     </div>
